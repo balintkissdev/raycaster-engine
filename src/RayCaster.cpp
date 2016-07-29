@@ -4,6 +4,27 @@
 #include "Camera.h"
 #include "MathLib.h"
 
+
+enum SquareColor
+{
+    EMPTY_SPACE,
+    RED_WALL,
+    GREEN_WALL,
+    BLUE_WALL,
+    YELLOW_WALL
+};
+
+enum WallSide
+{
+    VERTICAL,
+    HORIZONTAL
+};
+
+struct WallColor
+{
+    int r, g, b;
+};
+
 void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer)
 {
     // Ceiling
@@ -78,13 +99,13 @@ void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera) {
             }
 
             // Check for hit
-            if (0 < map_[mapX][mapY]) {
+            if (map_[mapX][mapY] != EMPTY_SPACE) {
                 hit = true;
             }
         }
 
         // Calculate distance to the point of impact
-        if (side == 0) {
+        if (side == VERTICAL) {
             perpWallDist = (mapX - camera.xPos() + (1 - stepX) / 2) / ray_vector.x;
         } else {
             perpWallDist = (mapY - camera.yPos() + (1 - stepY) / 2) / ray_vector.y;
@@ -103,16 +124,31 @@ void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera) {
             drawEnd = height_ - 1;
         }
 
-        if (side == 0)
+        WallColor wall_color;
+        switch(map_[mapX][mapY])
         {
-            SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);
-        }
-        else
-        {
-            SDL_SetRenderDrawColor(renderer, 0, 160, 0, 255);
+            case RED_WALL:
+                wall_color = { 255, 0, 0 };
+                break;
+            case GREEN_WALL:
+                wall_color = { 0, 255, 0 };
+                break;
+            case BLUE_WALL:
+                wall_color = { 0, 0, 255 };
+                break;
+            case YELLOW_WALL:
+                wall_color = { 255, 255, 0 };
+                break;
         }
 
+        if (side == HORIZONTAL)
+        {
+            wall_color.r = (wall_color.r >> 1) & 8355711;
+            wall_color.g = (wall_color.g >> 1) & 8355711;
+            wall_color.b = (wall_color.b >> 1) & 8355711;
+        }
+
+        SDL_SetRenderDrawColor(renderer, wall_color.r, wall_color.g, wall_color.b, 255);
         SDL_RenderDrawLine(renderer, x, drawStart, x, drawEnd);
-
     }
 }

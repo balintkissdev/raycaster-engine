@@ -3,7 +3,7 @@
 CC=g++
 
 CFLAGS=-g -Wall -std=c++0x
-SRC=Main.cpp Game.cpp Camera.cpp RayCaster.cpp
+SRC=src/Main.cpp src/Game.cpp src/Camera.cpp src/RayCaster.cpp
 LIB=-lSDL2
 OBJ=raycaster
 

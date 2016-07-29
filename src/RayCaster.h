@@ -21,6 +21,7 @@ class RayCaster
     private:
         std::vector< std::vector<int> > map_;
         int width_, height_;
+
 };
 
 #endif

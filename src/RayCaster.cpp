@@ -157,5 +157,13 @@ void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera) {
 
         SDL_SetRenderDrawColor(renderer, wall_color.r, wall_color.g, wall_color.b, 255);
         SDL_RenderDrawLine(renderer, x, draw_start, x, draw_end);
+
+        // Create Cel Shader-like effect for walls
+        // HACK: drawing over already drawn stripe is an unoptimalized way, needs work
+        const int shade_stroke = 5;
+        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+        SDL_RenderDrawLine(renderer, x, draw_start, x, draw_start + shade_stroke);
+        SDL_RenderDrawLine(renderer, x, draw_end - shade_stroke, x, draw_end);
     }
 }
+

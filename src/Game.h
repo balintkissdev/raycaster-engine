@@ -35,6 +35,7 @@ class Game
                     {1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4} }
             , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
             , camera_(4.5, 4.5, 1, 0, 0, -0.60, map_)
+            , overview_map_on(false)
             {}
         ~Game(); 
 
@@ -54,11 +55,15 @@ class Game
         RayCaster raycaster_;
         Camera camera_;
 
+        bool overview_map_on;
+
         SDL_Texture* top_texture_;
 
         void event();
         void update(const double frame_time);
         void render();
+
+        void drawMap();
 };
 
 #endif

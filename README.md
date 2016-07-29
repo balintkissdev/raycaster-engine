@@ -16,3 +16,4 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 * http://permadi.com/1996/05/ray-casting-tutorial-table-of-contents
 * http://lodev.org/cgtutor/raycasting.html
 * http://www.instructables.com/id/Making-a-Basic-3D-Engine-in-Java
+* Free sky texture is from http://www.texturex.com

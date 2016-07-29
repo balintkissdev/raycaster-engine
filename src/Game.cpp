@@ -55,6 +55,8 @@ void Game::init()
     }
     top_texture_ = SDL_CreateTextureFromSurface(renderer_, tmp_surface);
     SDL_FreeSurface(tmp_surface);
+
+    SDL_ShowCursor(SDL_DISABLE);
 }
 
 Game::~Game()
@@ -87,9 +89,9 @@ void Game::run()
 
 void Game::event()
 {
-
     const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
 
+    // FIXME: this code segment looks rather monolithic
     if (keystate[SDL_SCANCODE_UP])
     {
         camera_.moveForward();
@@ -100,11 +102,27 @@ void Game::event()
     }
     if (keystate[SDL_SCANCODE_LEFT])
     {
-        camera_.moveLeft();
+        camera_.turnLeft();
     }
     if (keystate[SDL_SCANCODE_RIGHT])
     {
-        camera_.moveRight();
+        camera_.turnRight();
+    }
+    if (keystate[SDL_SCANCODE_W])
+    {
+        camera_.moveForward();
+    }
+    if (keystate[SDL_SCANCODE_S])
+    {
+        camera_.moveBackward();
+    }
+    if (keystate[SDL_SCANCODE_A])
+    {
+        camera_.strafeLeft();
+    }
+    if (keystate[SDL_SCANCODE_D])
+    {
+        camera_.strafeRight();
     }
     while (SDL_PollEvent(&e_))
     {

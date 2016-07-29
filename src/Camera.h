@@ -34,8 +34,10 @@ class Camera
 
         void moveForward();
         void moveBackward();
-        void moveLeft();
-        void moveRight();
+        void turnLeft();
+        void turnRight();
+        void strafeLeft();
+        void strafeRight();
 
     private:
         mymath::Point2d<double> position_;

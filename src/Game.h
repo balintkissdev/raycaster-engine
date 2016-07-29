@@ -17,7 +17,6 @@ class Game
             : running_(false)
             , window_(0)
             , renderer_(0)
-            , pixels_{}
             , map_{ {1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2},
                     {1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2},
                     {1, 0, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 2},
@@ -49,7 +48,6 @@ class Game
 
         SDL_Event e_;
         
-        std::vector<int> pixels_;
         std::vector< std::vector<int> > map_;
 
         RayCaster raycaster_;

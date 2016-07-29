@@ -14,6 +14,7 @@ void Camera::moveForward()
     }
 }
 
+// FIXME: boilerplate code
 void Camera::moveBackward()
 {
     if (map_[static_cast<int>(position_.x - direction_vector_.x * movement_speed_)]
@@ -33,16 +34,45 @@ void Camera::moveBackward()
 // Rotation matrix is:
 //      [ cos(ROTATION_SPEED) -sin(ROTATION_SPEED) ]
 //      [ sin(ROTATION_SPEED) cos(ROTATION_SPEED) ]
-void Camera::moveRight()
+void Camera::turnLeft()
+{
+    direction_vector_ = mymath::rotate(direction_vector_, rotation_speed_);
+    plane_vector_ = mymath::rotate(plane_vector_, rotation_speed_);
+}
+
+void Camera::turnRight()
 {
     direction_vector_ = mymath::rotate(direction_vector_, -rotation_speed_);
     plane_vector_ = mymath::rotate(plane_vector_, -rotation_speed_);
 }
 
-void Camera::moveLeft()
+void Camera::strafeLeft()
 {
-    direction_vector_ = mymath::rotate(direction_vector_, rotation_speed_);
-    plane_vector_ = mymath::rotate(plane_vector_, rotation_speed_);
+    if (map_[static_cast<int>(position_.x - plane_vector_.x * movement_speed_)]
+            [static_cast<int>(position_.y)] == 0)
+    {
+        position_.x -= plane_vector_.x * movement_speed_;
+    }
+    if (map_[static_cast<int>(position_.x)]
+            [static_cast<int>(position_.y - plane_vector_.y * movement_speed_)] == 0 )
+    {
+        position_.y -= plane_vector_.y * movement_speed_;
+    }
+}
+
+void Camera::strafeRight()
+{
+    if (map_[static_cast<int>(position_.x + plane_vector_.x * movement_speed_)]
+            [static_cast<int>(position_.y)] == 0 )
+    {
+        position_.x += plane_vector_.x * movement_speed_;
+    }
+
+    if (map_[static_cast<int>(position_.x)]
+            [static_cast<int>(position_.y + plane_vector_.y * movement_speed_)] == 0 )
+    {
+        position_.y += plane_vector_.y * movement_speed_;
+    }
 }
 
 double Camera::xPos() const { return position_.x; }

@@ -5,6 +5,7 @@
 
 void Game::init()
 {
+    // Initialize SDL window and renderer
     SDL_Init(SDL_INIT_VIDEO);
     window_ = SDL_CreateWindow(
                 "Raycaster",
@@ -27,10 +28,23 @@ void Game::init()
         SDL_Quit();
         throw std::runtime_error("Error creating renderer");
     }
+
+    // Load sky texture
+    SDL_Surface* tmp_surface = SDL_LoadBMP("dusk_sky_texture.bmp");
+    if (!tmp_surface)
+    {
+        SDL_DestroyWindow(window_);
+        SDL_DestroyRenderer(renderer_);
+        SDL_Quit();
+        throw std::runtime_error("Error loading image.");
+    }
+    top_texture_ = SDL_CreateTextureFromSurface(renderer_, tmp_surface);
+    SDL_FreeSurface(tmp_surface);
 }
 
 Game::~Game()
 {
+    SDL_DestroyTexture(top_texture_);
     SDL_DestroyRenderer(renderer_);
     SDL_DestroyWindow(window_);
     SDL_Quit();
@@ -40,22 +54,18 @@ void Game::run()
 {
     running_ = true;
     
-    double time = 0;
-    double old_time = 0;
+    double current_time = 0;
+    double previous_time = 0;
 
     while (running_)
     {
-        old_time = time;
-        time = SDL_GetTicks();
-        double frame_time = (time - old_time) / 1000.0;
-        SDL_SetWindowTitle(window_, std::to_string(1.0 / frame_time).c_str());
-
-        camera_.movSpeed(frame_time * 5.0);
-        camera_.rotSpeed(frame_time * 3.0);
+        previous_time = current_time;
+        current_time = SDL_GetTicks();
+        double frame_time = (current_time - previous_time) / 1000.0;
+        SDL_SetWindowTitle(window_, std::to_string(1.0 / frame_time).c_str());  // Print framerate
 
         event();
-        camera_.update(map_);
-
+        update(frame_time);
         render();
     }
 }
@@ -63,7 +73,7 @@ void Game::run()
 void Game::event()
 {
 
-    const Uint8 * keystate = SDL_GetKeyboardState(NULL);
+    const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
 
     if (keystate[SDL_SCANCODE_UP])
     {
@@ -100,13 +110,19 @@ void Game::event()
     }
 }
 
+void Game::update(const double frame_time)
+{
+    camera_.movSpeed(frame_time * 5.0);
+    camera_.rotSpeed(frame_time * 3.0);
+}
+
 void Game::render()
 {
     // Clear
     SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
     SDL_RenderClear(renderer_);
 
-    raycaster_.drawCeilingAndFloor(renderer_);
+    raycaster_.drawCeilingAndFloor(renderer_, top_texture_);
     raycaster_.drawWalls(renderer_, camera_);
 
     // Swap buffer

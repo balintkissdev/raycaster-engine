@@ -132,7 +132,8 @@ namespace mymath
         return rotatable * rotationMatrix(rotation);
     }
 
-    template <typename T> Vector2d<T> operator*(Matrix2d<T> matrix, const Vector2d<T>& vector)
+    template <typename T>
+    Vector2d<T> operator*(Matrix2d<T> matrix, const Vector2d<T>& vector)
     {
         return {
             vector.x * matrix.a11 + vector.y * matrix.a12,
@@ -140,7 +141,8 @@ namespace mymath
         };
     }
 
-    template <typename T> Vector2d<T> operator*(const Vector2d<T>& vector, Matrix2d<T> matrix)
+    template <typename T>
+    Vector2d<T> operator*(const Vector2d<T>& vector, Matrix2d<T> matrix)
     {
         return {
             vector.x * matrix.a11 + vector.y * matrix.a12,

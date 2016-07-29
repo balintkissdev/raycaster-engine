@@ -16,6 +16,7 @@ class RayCaster
             {}
 
         void drawCeilingAndFloor(SDL_Renderer* renderer);
+        void drawCeilingAndFloor(SDL_Renderer* renderer, SDL_Texture* top_texture);
         void drawWalls(SDL_Renderer* renderer, const Camera& camera);
 
     private:

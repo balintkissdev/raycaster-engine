@@ -43,7 +43,6 @@ class Camera
         mymath::Vector2d<double> plane_vector_;
         double movement_speed_, rotation_speed_;
         std::vector< std::vector<int> > map_;
-
 };
 
 #endif

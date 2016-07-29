@@ -4,8 +4,7 @@
 #include "Camera.h"
 #include "MathLib.h"
 
-
-enum SquareColor
+enum SquareType
 {
     EMPTY_SPACE,
     RED_WALL,
@@ -27,14 +26,25 @@ struct WallColor
 
 void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer)
 {
-    // Ceiling
+    // "Ceiling"
     SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
     SDL_Rect rect = {0, 0, width_, height_/ 2};
     SDL_RenderFillRect(renderer, &rect);
 
-    // Floor
+    // "Floor"
     SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
     rect = {0, height_ / 2, width_, height_};
+    SDL_RenderFillRect(renderer, &rect);
+};
+
+void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer, SDL_Texture* top_texture)
+{
+    // Top
+    SDL_RenderCopy(renderer, top_texture, nullptr, nullptr);
+
+    // Bottom   (TODO)
+    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
+    SDL_Rect rect = {0, height_ / 2, width_, height_};
     SDL_RenderFillRect(renderer, &rect);
 };
 
@@ -43,89 +53,86 @@ void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer)
  */
 void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera) {
 
-    // Cast rays
+    // Cast rays horizontally
     for(int x = 0; x < width_; ++x)
     {
-        double cameraX = 2 * x / (double)(width_) - 1;       // x coordinate of current vertical stripe of camera plane
+        double camera_x = ((2 * x) / static_cast<double>(width_)) - 1;       // x coordinate of current vertical stripe of camera plane
 
         // Vectors for ray
-        mymath::Vector2d<double> ray_vector(camera.xDir() + camera.xPlane() * cameraX, 
-                                            camera.yDir() + camera.yPlane() * cameraX);
+        mymath::Vector2d<double> ray_vector(camera.xDir() + camera.xPlane() * camera_x, 
+                                            camera.yDir() + camera.yPlane() * camera_x);
 
         // Map position
-        int mapX = (int)camera.xPos();
-        int mapY = (int)camera.yPos();
-
-        // Length of ry from current position to next x or y-side
-        double sideDistX;
-        double sideDistY;
+        mymath::Point2d<int> square_on_map(static_cast<int>(camera.xPos()), static_cast<int>(camera.yPos()));
 
         // Length of ray from one side to next in map
-        double deltaDistX = std::sqrt( 1 + (ray_vector.y * ray_vector.y) / (ray_vector.x * ray_vector.x) );
-        double deltaDistY = std::sqrt( 1 + (ray_vector.x * ray_vector.x) / (ray_vector.y * ray_vector.y) );
+        double delta_distance_x = sqrt( 1 + (ray_vector.y * ray_vector.y) / (ray_vector.x * ray_vector.x) );
+        double delta_distance_y =sqrt( 1 + (ray_vector.x * ray_vector.x) / (ray_vector.y * ray_vector.y) );
 
-        double perpWallDist;    // Distance from player and the first wall
-        int stepX, stepY;       // Direction to go in x and y
-        bool hit = false;       // Was a wall hit
-        int side = 0;           // Was the wall vertical or horizontal
+        // Length of ry from current position to next x or y-side
+        double side_dist_x, side_dist_y;
 
         // Step direction and initial distance
+        int step_x, step_y;                 // Direction to go in x and y
         if (ray_vector.x < 0) {
-            stepX = -1;
-            sideDistX = (camera.xPos() - mapX) * deltaDistX;
+            step_x = -1;
+            side_dist_x = (camera.xPos() - square_on_map.x) * delta_distance_x;
         } else {
-            stepX = 1;
-            sideDistX = (mapX + 1.0 - camera.xPos()) * deltaDistX;
+            step_x = 1;
+            side_dist_x = (square_on_map.x + 1.0 - camera.xPos()) * delta_distance_x;
         }
         if (ray_vector.y < 0) {
-            stepY = -1;
-            sideDistY = (camera.yPos() - mapY) * deltaDistY;
+            step_y = -1;
+            side_dist_y = (camera.yPos() - square_on_map.y) * delta_distance_y;
         } else {
-            stepY = 1;
-            sideDistY = (mapY + 1.0 - camera.yPos()) * deltaDistY;
+            step_y = 1;
+            side_dist_y = (square_on_map.y + 1.0 - camera.yPos()) * delta_distance_y;
         }
 
         // Scan where ray hits a wall (DDA)
-        while ( !hit ) {
+        int side = VERTICAL;                // Was the wall vertical or horizontal
+        bool is_wall_hit = false;
+        while ( !is_wall_hit ) {
             // Jump to next square
-            if (sideDistX < sideDistY) {
-                sideDistX += deltaDistX;
-                mapX += stepX;
-                side = 0;
+            if (side_dist_x < side_dist_y) {
+                side_dist_x += delta_distance_x;
+                square_on_map.x += step_x;
+                side = VERTICAL;
             } else {
-                sideDistY += deltaDistY;
-                mapY += stepY;
-                side = 1;
+                side_dist_y += delta_distance_y;
+                square_on_map.y += step_y;
+                side = HORIZONTAL;
             }
 
             // Check for hit
-            if (map_[mapX][mapY] != EMPTY_SPACE) {
-                hit = true;
+            if (map_[square_on_map.x][square_on_map.y] != EMPTY_SPACE) {
+                is_wall_hit = true;
             }
         }
 
         // Calculate distance to the point of impact
+        double wall_to_player_distance;     // Distance from player and the first wall
         if (side == VERTICAL) {
-            perpWallDist = (mapX - camera.xPos() + (1 - stepX) / 2) / ray_vector.x;
+            wall_to_player_distance = (square_on_map.x - camera.xPos() + (1 - step_x) / 2) / ray_vector.x;
         } else {
-            perpWallDist = (mapY - camera.yPos() + (1 - stepY) / 2) / ray_vector.y;
+            wall_to_player_distance = (square_on_map.y - camera.yPos() + (1 - step_y) / 2) / ray_vector.y;
         }
 
         // Calculate height of the wall based on the instance
-        int lineHeight = (int)(height_ / perpWallDist);
+        int wall_stripe_height = static_cast<int>(height_ / wall_to_player_distance);
 
         // Calculate lowest and highest pixel to fill in current stripe
-        int drawStart = -lineHeight / 2 + height_ / 2;
-        if (drawStart < 0) {
-            drawStart = 0;
+        int draw_start = -wall_stripe_height / 2 + height_ / 2;
+        if (draw_start < 0) {
+            draw_start = 0;
         }
-        int drawEnd = lineHeight / 2 + height_ / 2;
-        if (drawEnd >= height_) {
-            drawEnd = height_ - 1;
+        int draw_end = wall_stripe_height / 2 + height_ / 2;
+        if (draw_end >= height_) {
+            draw_end = height_ - 1;
         }
 
         WallColor wall_color;
-        switch(map_[mapX][mapY])
+        switch(map_[square_on_map.x][square_on_map.y])
         {
             case RED_WALL:
                 wall_color = { 255, 0, 0 };
@@ -149,6 +156,6 @@ void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera) {
         }
 
         SDL_SetRenderDrawColor(renderer, wall_color.r, wall_color.g, wall_color.b, 255);
-        SDL_RenderDrawLine(renderer, x, drawStart, x, drawEnd);
+        SDL_RenderDrawLine(renderer, x, draw_start, x, draw_end);
     }
 }

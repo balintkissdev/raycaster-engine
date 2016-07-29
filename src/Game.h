@@ -47,15 +47,18 @@ class Game
         SDL_Renderer* renderer_;
 
         SDL_Event e_;
-
+        
         std::vector<int> pixels_;
         std::vector< std::vector<int> > map_;
 
         RayCaster raycaster_;
         Camera camera_;
 
-        void render();
+        SDL_Texture* top_texture_;
+
         void event();
+        void update(const double frame_time);
+        void render();
 };
 
 #endif

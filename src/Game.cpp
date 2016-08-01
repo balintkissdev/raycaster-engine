@@ -3,67 +3,75 @@
 #include <iostream>
 #include <stdexcept>
 
-// FIXME: duplicated code
-enum SquareType
-{
-    EMPTY_SPACE,
-    RED_WALL,
-    GREEN_WALL,
-    BLUE_WALL,
-    YELLOW_WALL
-};
+#include "WallTypes.h"
 
-struct WallColor
-{
-    int r, g, b;
-};
+#ifdef _WIN32
+    const char FILE_SEPARATOR = '\\';
+#else
+    const char FILE_SEPARATOR = '/';
+#endif
 
 void Game::init()
 {
     // Initialize SDL window and renderer
     SDL_Init(SDL_INIT_VIDEO);
-    window_ = SDL_CreateWindow(
-                "Press M for map",
+    window_.reset(SDL_CreateWindow(
+                "Press M for map, cursors to move and turn and WASD to move and strafe.",
                 SDL_WINDOWPOS_UNDEFINED,
                 SDL_WINDOWPOS_UNDEFINED,
                 WINDOW_WIDTH,
                 WINDOW_HEIGHT,
                 SDL_WINDOW_SHOWN
-            );
+            ));
     if (!window_)
     {
         SDL_Quit();
-        throw std::runtime_error("Error creating window");
+        std::string sdl_error_msg(SDL_GetError());
+        throw std::runtime_error("Error creating window" + sdl_error_msg);
     }
 
-    renderer_ = SDL_CreateRenderer(window_, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    // TODO: Add selectable Hardware rendering capability
+    renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_SOFTWARE));
     if (!renderer_)
     {
-        SDL_DestroyWindow(window_);
+        window_.reset();
+        std::string sdl_error_msg(SDL_GetError());
         SDL_Quit();
-        throw std::runtime_error("Error creating renderer");
+        throw std::runtime_error("Error creating renderer: " + sdl_error_msg);
     }
 
     // Load sky texture
-    SDL_Surface* tmp_surface = SDL_LoadBMP("dusk_sky_texture.bmp");
-    if (!tmp_surface)
+    top_texture_.reset(loadTexture(std::string("resources") + FILE_SEPARATOR + "textures" + FILE_SEPARATOR + "/dusk_sky_texture.bmp"));
+    if (!top_texture_)
     {
-        SDL_DestroyWindow(window_);
-        SDL_DestroyRenderer(renderer_);
+        renderer_.reset();
+        window_.reset();
+        std::string sdl_error_msg(SDL_GetError());
         SDL_Quit();
-        throw std::runtime_error("Error loading image.");
+        throw std::runtime_error("Error loading image: " + sdl_error_msg);
     }
-    top_texture_ = SDL_CreateTextureFromSurface(renderer_, tmp_surface);
-    SDL_FreeSurface(tmp_surface);
+
+    // Load wall textures
+    //auto shared_surface_deleter = [](SDL_Surface* surface) { SDL_FreeSurface(surface); };   // HACK
+    //wall_textures_.emplace_back(loadSurface("resources/textures/brick1.bmp"), shared_surface_deleter);
+    //wall_textures_.emplace_back(loadSurface("resources/textures/brick2.bmp"), shared_surface_deleter);
+    //wall_textures_.emplace_back(loadSurface("resources/textures/stone1.bmp"), shared_surface_deleter);
+    //wall_textures_.emplace_back(loadSurface("resources/textures/stone2.bmp"), shared_surface_deleter);
+    // TODO: error handling and cleanup code for multiple texture
 
     SDL_ShowCursor(SDL_DISABLE);
 }
 
 Game::~Game()
 {
-    SDL_DestroyTexture(top_texture_);
-    SDL_DestroyRenderer(renderer_);
-    SDL_DestroyWindow(window_);
+    for (auto& t : wall_textures_)
+    {
+        t.reset();
+    }
+
+    top_texture_.reset();
+    renderer_.reset();
+    window_.reset();
     SDL_Quit();
 }
 
@@ -85,6 +93,37 @@ void Game::run()
         update(frame_time);
         render();
     }
+}
+
+SDL_Texture* Game::loadTexture(std::string path)
+{
+    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
+    SDL_Surface* tmp_surface = SDL_LoadBMP(absolute_path.c_str());
+    if (!tmp_surface)
+    {
+        return nullptr;
+    }
+    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_.get(), tmp_surface);
+    SDL_FreeSurface(tmp_surface);
+    return texture;
+}
+
+SDL_Surface* Game::loadSurface(std::string path)
+{
+    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
+    SDL_Surface* surface = SDL_LoadBMP(absolute_path.c_str());
+    if (surface)
+    {
+        surface = SDL_ConvertSurface(surface, SDL_GetWindowSurface(window_.get())->format, 0);
+
+        if (surface)
+        {
+            return surface;
+        }
+        SDL_FreeSurface(surface);
+    }
+
+    return nullptr;
 }
 
 void Game::event()
@@ -158,16 +197,16 @@ void Game::update(const double frame_time)
 void Game::render()
 {
     // Clear
-    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-    SDL_RenderClear(renderer_);
+    SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
+    SDL_RenderClear(renderer_.get());
 
-    raycaster_.drawCeilingAndFloor(renderer_, top_texture_);
-    raycaster_.drawWalls(renderer_, camera_);
+    raycaster_.drawCeilingAndFloor(renderer_.get(), top_texture_.get());
+    raycaster_.drawWalls(renderer_.get(), camera_, wall_textures_);
 
     if (overview_map_on) drawMap();
 
     // Swap buffer
-    SDL_RenderPresent(renderer_);
+    SDL_RenderPresent(renderer_.get());
 }
 
 void Game::drawMap()
@@ -175,9 +214,9 @@ void Game::drawMap()
     // Draw blocks
     const int square_size = 32;
     SDL_Rect rect;
-    for (int x = 0; x < map_.size(); ++x)
+    for (int x = 0; x < static_cast<int>(map_.size()); ++x)
     {
-        for (int y = 0; y < map_[x].size(); ++y)
+        for (int y = 0; y < static_cast<int>(map_[x].size()); ++y)
         {
             WallColor wall_color;
             switch(map_[x][y])
@@ -198,22 +237,22 @@ void Game::drawMap()
                     wall_color = { 255, 255, 0 };
                     break;
             }
-            SDL_SetRenderDrawColor(renderer_, wall_color.r, wall_color.g, wall_color.b, 255);
+            SDL_SetRenderDrawColor(renderer_.get(), wall_color.r, wall_color.g, wall_color.b, 255);
             rect = {0 + square_size * x, 0 + square_size * y, square_size, square_size};
-            SDL_RenderFillRect(renderer_, &rect);
-            SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-            SDL_RenderDrawRect(renderer_, &rect);
+            SDL_RenderFillRect(renderer_.get(), &rect);
+            SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
+            SDL_RenderDrawRect(renderer_.get(), &rect);
         }
     }
 
     // Draw player
-    SDL_SetRenderDrawColor(renderer_, 255, 255, 255, 255);
+    SDL_SetRenderDrawColor(renderer_.get(), 255, 255, 255, 255);
     rect = {
         square_size * static_cast<int>(camera_.xPos()) + square_size / 4, 
         square_size * static_cast<int>(camera_.yPos()) + square_size / 4, 
         square_size / 2, square_size / 2
     };
-    SDL_RenderFillRect(renderer_, &rect);
-    SDL_SetRenderDrawColor(renderer_, 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer_, &rect);
+    SDL_RenderFillRect(renderer_.get(), &rect);
+    SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
+    SDL_RenderDrawRect(renderer_.get(), &rect);
 }

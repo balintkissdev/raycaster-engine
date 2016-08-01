@@ -10,12 +10,23 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 * WASD to move and strafe
 * M to toggle mini-map
 
+## Requirements
+
+* C++11-standard compatible C++ compiler
+* CMake
+* [SDL2 library](https://www.libsdl.org/download-2.0.php) (apt-get install libsdl2-dev)
+
 ## How to build and run
 
-1. Get a C++11-standard compatible C++ compiler
-2. Download and set up [SDL2 library](https://www.libsdl.org/download-2.0.php) (apt-get install libsdl2-dev)
-3. Execute "make" command
-4. Run your executable
+Just run `./install.sh` or
+
+1. `mkdir CMakeBuild && cmake ..`
+2. `make`
+3. `bin/Raycaster`
+
+For cross-compilation, you can use one of the CMake toolchain files.
+
+`TOOLCHAIN=CMake/toolchain/x86_64-w64-mingw32.cmake ./install.sh`
 
 ## References:
 

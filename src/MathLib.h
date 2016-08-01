@@ -1,6 +1,8 @@
 #ifndef MATHLIB_H
 #define MATHLIB_H
 
+#include <cmath>
+
 namespace mymath
 {
     /**
@@ -10,6 +12,7 @@ namespace mymath
     struct Point2d
     {
         T x, y;
+        Point2d() = default;
         Point2d(const T& x, const T& y) : x(x), y(y) {}
     };
 
@@ -20,6 +23,7 @@ namespace mymath
     struct Vector2d
     {
         T x, y;
+        Vector2d() = default;
         Vector2d(const T& x, const T& y) : x(x), y(y) {}
     };
 
@@ -61,6 +65,7 @@ namespace mymath
     {
         T a11, a12, 
           a21, a22;
+        Matrix2d() = default;
         Matrix2d(const T& a11, const T& a12, const T& a21, const T& a22)
             : a11(a11), a12(a12)
             , a21(a21), a22(a22)

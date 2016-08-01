@@ -4,6 +4,11 @@
 
 My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra lib. One of the goals was to make raycasting computation equations more explicit and readable.
 
+## Downloads
+
+* [Windows 64-bit executable](https://github.com/balintkiss501/raycaster-engine/releases/download/v0.0.1/raycaster-engine_windows_x86_64.zip)
+* [Linux 64-bit executable](https://github.com/balintkiss501/raycaster-engine/releases/download/v0.0.1/raycaster-engine_linux_x86_64.tar.gz)
+
 ## Controls
 
 * Up/Down to move and Left/Right to turn around

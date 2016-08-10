@@ -25,36 +25,80 @@ namespace mymath
         T x, y;
         Vector2d() = default;
         Vector2d(const T& x, const T& y) : x(x), y(y) {}
+
+        Vector2d& operator+=(const Vector2d& rhs)
+        {
+            x += rhs.x;
+            y += rhs.y;
+            return *this;
+        }
+
+        Vector2d& operator-=(const Vector2d& rhs)
+        {
+            x -= rhs.x;
+            y -= rhs.y;
+            return *this;
+        }
+
+        Vector2d& operator*=(const T& scalar)
+        {
+            x *= scalar;
+            y *= scalar;
+            return *this;
+        }
+
+        Vector2d& operator/=(const T& scalar)
+        {
+            x /= scalar;
+            y /= scalar;
+            return *this;
+        }
+
+        double length()
+        {
+            return sqrt(x*x + y*y);
+        }
+
+        double angle()
+        {
+            return atan2(y, x);
+        }
     };
 
     template <typename T>
-    Vector2d<T> operator+(const Vector2d<T>& lhs, const Vector2d<T>& rhs)
+    inline Vector2d<T> operator+(Vector2d<T> lhs, const Vector2d<T>& rhs)
     {
-        return {
-            lhs.x + rhs.x,
-            lhs.y + rhs.y
-        };
+        return lhs += rhs;
     }
 
     template <typename T>
-    Vector2d<T> operator-(const Vector2d<T>& lhs, const Vector2d<T>& rhs)
+    inline Vector2d<T> operator-(Vector2d<T> lhs, const Vector2d<T>& rhs)
     {
-        return {
-            lhs.x - rhs.x,
-            lhs.y - rhs.y
-        };
+        return lhs += rhs;
     }
 
     template <typename T>
-    Vector2d<T> operator*(const T& scalar, const Vector2d<T>& vector)
+    inline Vector2d<T> operator*(const T& scalar, Vector2d<T> vector)
     {
-        return { scalar * vector.x, scalar * vector.y };
+        return vector *= scalar;
     }
 
     template <typename T>
-    Vector2d<T> operator*(const Vector2d<T>& vector, const T& scalar)
+    inline Vector2d<T> operator*(Vector2d<T> vector, const T& scalar)
     {
-        return { scalar * vector.x, scalar * vector.y };
+        return vector *= scalar;
+    }
+
+    template <typename T>
+    inline Vector2d<T> operator/(const T& scalar, Vector2d<T> vector)
+    {
+        return vector /= scalar;
+    }
+
+    template <typename T>
+    inline Vector2d<T> operator/(Vector2d<T> vector, const T& scalar)
+    {
+        return vector /= scalar;
     }
 
     /**
@@ -65,61 +109,75 @@ namespace mymath
     {
         T a11, a12, 
           a21, a22;
+
         Matrix2d() = default;
         Matrix2d(const T& a11, const T& a12, const T& a21, const T& a22)
             : a11(a11), a12(a12)
             , a21(a21), a22(a22)
             {}
+
+        Matrix2d& operator+=(const Matrix2d rhs)
+        {
+            a11 += rhs.a11; a12 += rhs.a12;
+            a21 += rhs.a21; a22 += rhs.a22;
+            return *this;
+        }
+
+        Matrix2d& operator-=(const Matrix2d rhs)
+        {
+            a11 -= rhs.a11; a12 -= rhs.a12;
+            a21 -= rhs.a21; a22 -= rhs.a22;
+            return *this;
+        }
+
+        Matrix2d& operator*=(const Matrix2d rhs)
+        {
+            a11 = a11 * rhs.a11 + a12 * rhs.a21; a12 = a11 * rhs.a12 + a12 * rhs.a22;
+            a21 = a21 * rhs.a11 + a22 * rhs.a21; a22 = a21 * rhs.a12 + a22 * rhs.a22;
+            return *this;
+        }
+
+        Matrix2d& operator*=(const T& scalar)
+        {
+            a11 *= scalar; a12 *= scalar;
+            a21 *= scalar; a22 *= scalar;
+            return *this;
+        }
     };
 
     template <typename T>
-    Matrix2d<T> operator+(const Matrix2d<T>& lhs, const Matrix2d<T>& rhs)
+    inline Matrix2d<T> operator+(Matrix2d<T> lhs, const Matrix2d<T>& rhs)
     {
-        return {
-            lhs.a11 + rhs.a11, lhs.a12 + rhs.a12,
-            lhs.a21 + rhs.a21, lhs.a22 + rhs.a22
-        };
+        return lhs += rhs;
     }
 
     template <typename T>
-    Matrix2d<T> operator-(const Matrix2d<T>& lhs, const Matrix2d<T>& rhs)
+    inline Matrix2d<T> operator-(Matrix2d<T> lhs, const Matrix2d<T>& rhs)
     {
-        return {
-            lhs.a11 - rhs.a11, lhs.a12 - rhs.a12,
-            lhs.a21 - rhs.a21, lhs.a22 - rhs.a22
-        };
+        return lhs -= rhs;
     }
 
     template <typename T>
-    Matrix2d<T> operator*(const Matrix2d<T>& lhs, const Matrix2d<T>& rhs)
+    inline Matrix2d<T> operator*(Matrix2d<T>& lhs, const Matrix2d<T>& rhs)
     {
-        return {
-            (lhs.a11 * rhs.a11 + lhs.a12 * rhs.a21), (lhs.a11 * rhs.a12 + lhs.a12 * rhs.a22),
-            (lhs.a21 * rhs.a11 + lhs.a22 * rhs.a21), (lhs.a21 * rhs.a12 + lhs.a22 * rhs.a22)
-        };
+        return lhs *= rhs;
     }
 
     template <typename T>
-    Matrix2d<T> operator*(const T& scalar, const Matrix2d<T>& matrix)
+    inline Matrix2d<T> operator*(const T& scalar, Matrix2d<T> matrix)
     {
-        return {
-            scalar * matrix.a11, scalar * matrix.a12,
-            scalar * matrix.a21, scalar * matrix.a22
-        };
+        return matrix *= scalar;
     }
 
     template <typename T>
-    Matrix2d<T> operator*(const Matrix2d<T>& matrix, const T& scalar)
+    inline Matrix2d<T> operator*(Matrix2d<T> matrix, const T& scalar)
     {
-        return {
-            scalar * matrix.a11, scalar * matrix.a12,
-            scalar * matrix.a21, scalar * matrix.a22
-        };
+        return matrix *= scalar;
     }
 
     const Matrix2d<double> IDENTITY_MATRIX = {
-        1, 0,
-        0, 1
+        1.0, 0.0,
+        0.0, 1.0
     };
 
     template <typename T>

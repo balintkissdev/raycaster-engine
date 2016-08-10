@@ -14,6 +14,16 @@ namespace mymath
         T x, y;
         Point2d() = default;
         Point2d(const T& x, const T& y) : x(x), y(y) {}
+
+        bool operator==(const Point2d& other) const
+        {
+            return x == other.x && y == other.y;
+        }
+
+        bool operator!=(const Point2d& other) const
+        {
+            return !(*this == other);
+        }
     };
 
     /**
@@ -52,6 +62,16 @@ namespace mymath
             x /= scalar;
             y /= scalar;
             return *this;
+        }
+
+        bool operator==(const Vector2d& other) const
+        {
+            return x == other.x && y == other.y;
+        }
+
+        bool operator!=(const Vector2d& other) const
+        {
+            return !(*this == other);
         }
 
         double length()
@@ -142,6 +162,17 @@ namespace mymath
             a11 *= scalar; a12 *= scalar;
             a21 *= scalar; a22 *= scalar;
             return *this;
+        }
+
+        bool operator==(const Matrix2d& other) const
+        {
+            return a11 == other.a11 && a12 == other.a12 &&
+                   a21 == other.a21 && a22 == other.a22;
+        }
+
+        bool operator!=(const Matrix2d& other) const
+        {
+            return !(*this == other);
         }
     };
 

@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <stdexcept>
+#include <chrono>
 
 #include "WallTypes.h"
 
@@ -27,7 +28,7 @@ void Game::init()
     {
         SDL_Quit();
         std::string sdl_error_msg(SDL_GetError());
-        throw std::runtime_error("Error creating window" + sdl_error_msg);
+        throw std::runtime_error("Error creating window: " + sdl_error_msg);
     }
 
     // TODO: Add selectable Hardware rendering capability
@@ -39,6 +40,7 @@ void Game::init()
         SDL_Quit();
         throw std::runtime_error("Error creating renderer: " + sdl_error_msg);
     }
+    SDL_GL_SetSwapInterval(0);
 
     // Load sky texture
     top_texture_.reset(loadTexture(std::string("resources") + FILE_SEPARATOR + "textures" + FILE_SEPARATOR + "/dusk_sky_texture.bmp"));
@@ -77,17 +79,21 @@ Game::~Game()
 
 void Game::run()
 {
+    using namespace std::chrono;
+    const double NANOSECOND = 1000000000.0;
+
     running_ = true;
     
-    double current_time = 0;
-    double previous_time = 0;
+    high_resolution_clock::time_point current_time = high_resolution_clock::now();
+    high_resolution_clock::time_point previous_time;
 
     while (running_)
     {
         previous_time = current_time;
-        current_time = SDL_GetTicks();
-        double frame_time = (current_time - previous_time) / 1000.0;
-        //SDL_SetWindowTitle(window_, std::to_string(1.0 / frame_time).c_str());  // Print framerate
+        current_time = high_resolution_clock::now();
+        double frame_time = duration_cast<nanoseconds>(current_time - previous_time).count() / NANOSECOND;
+        //SDL_SetWindowTitle(window_.get(), std::to_string(frame_time).c_str());
+        //SDL_SetWindowTitle(window_.get(), std::to_string(1.0 / frame_time).c_str());  // Print framerate
 
         event();
         update(frame_time);
@@ -131,11 +137,11 @@ void Game::event()
     const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
 
     // FIXME: this code segment looks rather monolithic
-    if (keystate[SDL_SCANCODE_UP])
+    if (keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W])
     {
         camera_.moveForward();
     }
-    if (keystate[SDL_SCANCODE_DOWN])
+    if (keystate[SDL_SCANCODE_DOWN] || keystate[SDL_SCANCODE_S])
     {
         camera_.moveBackward();
     }
@@ -146,14 +152,6 @@ void Game::event()
     if (keystate[SDL_SCANCODE_RIGHT])
     {
         camera_.turnRight();
-    }
-    if (keystate[SDL_SCANCODE_W])
-    {
-        camera_.moveForward();
-    }
-    if (keystate[SDL_SCANCODE_S])
-    {
-        camera_.moveBackward();
     }
     if (keystate[SDL_SCANCODE_A])
     {

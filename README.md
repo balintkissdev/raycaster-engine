@@ -17,7 +17,7 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 
 ## Requirements
 
-* C++11-standard compatible C++ compiler
+* C++14-standard compatible C++ compiler
 * CMake
 * [SDL2 library](https://www.libsdl.org/download-2.0.php) (apt-get install libsdl2-dev)
 

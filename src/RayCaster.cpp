@@ -113,7 +113,6 @@ void RayCaster::drawWalls(SDL_Renderer* renderer, const Camera& camera,
             draw_end = height_ - 1;
         }
 
-
         drawPlainColoredStripe(renderer, x, square_on_map, draw_start, draw_end, side);
 
         // Create Cel Shader-like effect for walls

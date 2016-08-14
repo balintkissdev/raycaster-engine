@@ -13,6 +13,10 @@
 static const int WINDOW_WIDTH = 1024;
 static const int WINDOW_HEIGHT = 768;
 
+const float BASE_MOVEMENT_SPEED = 7.0;
+const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 4.0;
+const float CURSOR_TURN_SPEED = 3.0;
+
 // FIXME: Game class has strict coupling to SDL
 class Game
 {
@@ -35,6 +39,7 @@ class Game
                     {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
                     {1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4} }
             , overview_map_on(false)
+            , movement_speed_(BASE_MOVEMENT_SPEED)
             , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
             , camera_(4.5, 4.5, 1, 0, 0, -0.60, map_)
             , window_(nullptr)
@@ -50,6 +55,7 @@ class Game
         bool running_;
         std::vector< std::vector<int> > map_;
         bool overview_map_on;
+        float movement_speed_;
 
         RayCaster raycaster_;
         Camera camera_;

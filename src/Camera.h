@@ -22,6 +22,7 @@ class Camera
 
         void update(const std::vector< std::vector<int> >& map);
 
+        // TODO: cleanup
         double xPos() const;
         double yPos() const;
         double xDir() const;

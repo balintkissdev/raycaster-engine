@@ -12,6 +12,7 @@
     const char FILE_SEPARATOR = '/';
 #endif
 
+
 void Game::init()
 {
     // Initialize SDL window and renderer
@@ -137,6 +138,15 @@ void Game::event()
     const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
 
     // FIXME: this code segment looks rather monolithic
+    if (keystate[SDL_SCANCODE_LSHIFT])
+    {
+        movement_speed_ = RUN_MOVEMENT_SPEED;
+    }
+    else
+    {
+        movement_speed_ = BASE_MOVEMENT_SPEED;
+    }
+
     if (keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W])
     {
         camera_.moveForward();
@@ -185,8 +195,8 @@ void Game::event()
 
 void Game::update(const double frame_time)
 {
-    camera_.movSpeed(frame_time * 5.0);
-    camera_.rotSpeed(frame_time * 3.0);
+    camera_.movSpeed(frame_time * movement_speed_);
+    camera_.rotSpeed(frame_time * CURSOR_TURN_SPEED);
 
     //SDL_SetWindowTitle(window_, 
     //        (std::to_string(camera_.xPos()) + ":" + std::to_string(camera_.yPos())).c_str());

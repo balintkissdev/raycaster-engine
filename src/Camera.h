@@ -20,19 +20,9 @@ class Camera
             , map_(map)
             {}
 
-        void update(const std::vector< std::vector<int> >& map);
-
-        // TODO: cleanup
-        double xPos() const;
-        double yPos() const;
-        double xDir() const;
-        double yDir() const;
-        double xPlane() const;
-        double yPlane() const;
-
-        void movSpeed(double mov_speed);
-        void rotSpeed(double rot_speed);
-
+        /**
+         * CONTROLS
+         */
         void moveForward();
         void moveBackward();
         void turnLeft();
@@ -40,12 +30,25 @@ class Camera
         void strafeLeft();
         void strafeRight();
 
+        /**
+         * GETTERS
+         */
+        const mymath::Vector2d<double>& position() const;
+        const mymath::Vector2d<double>& direction() const;
+        const mymath::Vector2d<double>& plane() const;
+
+        /**
+         * SETTERS
+         */
+        void movSpeed(double mov_speed);
+        void rotSpeed(double rot_speed);
+
     private:
-        mymath::Point2d<double> position_;
+        mymath::Vector2d<double> position_;
         mymath::Vector2d<double> direction_vector_;
         mymath::Vector2d<double> plane_vector_;
         double movement_speed_, rotation_speed_;
-        std::vector< std::vector<int> > map_;
+        std::vector< std::vector<int> > map_;       // TODO: change to pointer
 };
 
 #endif

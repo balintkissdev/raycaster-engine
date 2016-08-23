@@ -78,6 +78,7 @@ Game::~Game()
     SDL_Quit();
 }
 
+// TODO: change timestep implementation
 void Game::run()
 {
     using namespace std::chrono;
@@ -217,6 +218,7 @@ void Game::render()
     SDL_RenderPresent(renderer_.get());
 }
 
+// TODO: this is a very basic map
 void Game::drawMap()
 {
     // Draw blocks
@@ -256,8 +258,8 @@ void Game::drawMap()
     // Draw player
     SDL_SetRenderDrawColor(renderer_.get(), 255, 255, 255, 255);
     rect = {
-        square_size * static_cast<int>(camera_.xPos()) + square_size / 4, 
-        square_size * static_cast<int>(camera_.yPos()) + square_size / 4, 
+        square_size * static_cast<int>(camera_.position().x) + square_size / 4, 
+        square_size * static_cast<int>(camera_.position().y) + square_size / 4, 
         square_size / 2, square_size / 2
     };
     SDL_RenderFillRect(renderer_.get(), &rect);

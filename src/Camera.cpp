@@ -75,12 +75,9 @@ void Camera::strafeRight()
     }
 }
 
-double Camera::xPos() const { return position_.x; }
-double Camera::yPos() const { return position_.y; }
-double Camera::xDir() const { return direction_vector_.x; }
-double Camera::yDir() const { return direction_vector_.y; }
-double Camera::xPlane() const { return plane_vector_.x; }
-double Camera::yPlane() const { return plane_vector_.y; }
+const mymath::Vector2d<double>& Camera::position() const { return position_; }
+const mymath::Vector2d<double>& Camera::direction() const { return direction_vector_; }
+const mymath::Vector2d<double>& Camera::plane() const { return plane_vector_; }
 
 void Camera::movSpeed(double mov_speed) { movement_speed_ = mov_speed; }
 void Camera::rotSpeed(double rot_speed) { rotation_speed_ = rot_speed; }

@@ -44,6 +44,7 @@ if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_RUNTIME_OUTPUT_DIRECTORY)
     set(RESOURCES
         README.md
         resources/textures/dusk_sky_texture.bmp
+        resources/map/map.dat
     )
 
     foreach(f IN LISTS RESOURCES)

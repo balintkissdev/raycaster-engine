@@ -10,12 +10,14 @@
 #include "Camera.h"
 #include "RayCaster.h"
 
+typedef std::vector< std::vector<int> > Map;
+
 static const int WINDOW_WIDTH = 1024;
 static const int WINDOW_HEIGHT = 768;
 
-const float BASE_MOVEMENT_SPEED = 7.0;
-const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 4.0;
-const float CURSOR_TURN_SPEED = 3.0;
+static const float BASE_MOVEMENT_SPEED = 7.0;
+static const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 4.0;
+static const float CURSOR_TURN_SPEED = 3.0;
 
 // FIXME: Game class has strict coupling to SDL
 class Game
@@ -23,21 +25,7 @@ class Game
     public:
         Game()
             : running_(false)
-            , map_{ {1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2},
-                    {1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2},
-                    {1, 0, 3, 3, 3, 3, 3, 0, 0, 0, 0, 0, 0, 0, 2},
-                    {1, 0, 3, 0, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 2},
-                    {1, 0, 3, 0, 0, 0, 3, 0, 2, 2, 2, 0, 2, 2, 2},
-                    {1, 0, 3, 0, 0, 0, 3, 0, 2, 0, 0, 0, 0, 0, 2},
-                    {1, 0, 3, 3, 0, 3, 3, 0, 2, 0, 0, 0, 0, 0, 2},
-                    {1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 2},
-                    {1, 1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 0, 4, 4, 4},
-                    {1, 0, 0, 0, 0, 0, 1, 4, 0, 0, 0, 0, 0, 0, 4},
-                    {1, 0, 0, 0, 0, 0, 1, 4, 0, 0, 0, 0, 0, 0, 4},
-                    {1, 0, 0, 2, 0, 0, 1, 4, 0, 3, 3, 3, 3, 0, 4},
-                    {1, 0, 0, 0, 0, 0, 1, 4, 0, 3, 3, 3, 3, 0, 4},
-                    {1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 4},
-                    {1, 1, 1, 1, 1, 1, 1, 4, 4, 4, 4, 4, 4, 4, 4} }
+            , map_{}
             , overview_map_on(false)
             , movement_speed_(BASE_MOVEMENT_SPEED)
             , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
@@ -53,7 +41,7 @@ class Game
 
     private:
         bool running_;
-        std::vector< std::vector<int> > map_;
+        Map map_;
         bool overview_map_on;
         float movement_speed_;
 
@@ -69,6 +57,8 @@ class Game
 
         SDL_Surface* loadSurface(std::string path);
         SDL_Texture* loadTexture(std::string path);
+
+        Map loadMap(const std::string& path);
 
         void event();
         void update(const double frame_time);

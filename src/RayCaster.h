@@ -27,7 +27,7 @@ class RayCaster
         );
 
     private:
-        std::vector< std::vector<int> > map_;
+        const std::vector< std::vector<int> >& map_;
         int width_, height_;
 
         void drawPlainColoredStripe(SDL_Renderer* renderer, 
@@ -38,7 +38,6 @@ class RayCaster
         );
 
         WallColor extractPixelColor(SDL_Surface* wall, const mymath::Point2d<int>& pixel_position);
-
 };
 
 #endif

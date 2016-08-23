@@ -48,7 +48,7 @@ class Camera
         mymath::Vector2d<double> direction_vector_;
         mymath::Vector2d<double> plane_vector_;
         double movement_speed_, rotation_speed_;
-        std::vector< std::vector<int> > map_;       // TODO: change to pointer
+        const std::vector< std::vector<int> >& map_;       // TODO: change to pointer
 };
 
 #endif

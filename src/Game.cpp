@@ -1,6 +1,8 @@
 #include "Game.h"
 
 #include <iostream>
+#include <fstream>
+#include <sstream>
 #include <stdexcept>
 #include <chrono>
 
@@ -11,7 +13,6 @@
 #else
     const char FILE_SEPARATOR = '/';
 #endif
-
 
 void Game::init()
 {
@@ -43,6 +44,20 @@ void Game::init()
     }
     SDL_GL_SetSwapInterval(0);
 
+    // Load map
+    try
+    {
+        std::string map_path(std::string("resources") + FILE_SEPARATOR + "map" + FILE_SEPARATOR + "map.dat");
+        map_ = loadMap(map_path);
+    }
+    catch (std::runtime_error& e)
+    {
+        renderer_.reset();
+        window_.reset();
+        SDL_Quit();
+        throw e;
+    }
+
     // Load sky texture
     top_texture_.reset(loadTexture(std::string("resources") + FILE_SEPARATOR + "textures" + FILE_SEPARATOR + "/dusk_sky_texture.bmp"));
     if (!top_texture_)
@@ -63,6 +78,36 @@ void Game::init()
     // TODO: error handling and cleanup code for multiple texture
 
     SDL_ShowCursor(SDL_DISABLE);
+}
+
+Map Game::loadMap(const std::string& path)
+{
+    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
+    std::ifstream file(absolute_path, std::ios::in);
+    if (file)
+    {
+        std::string line;
+        std::vector< std::vector<int> > map;
+        while (std::getline(file, line))
+        {
+            std::vector<int> row;
+            std::stringstream current_line(line);
+            int i;
+            while (current_line >> i)
+            {
+                if (current_line.peek() == ' ' || current_line.peek() == ',')
+                {
+                    current_line.ignore();
+                }
+                row.push_back(i);
+            }
+
+            map.push_back(row);
+        }
+
+        return map;
+    }
+    throw std::runtime_error("Unable to load map file: " + path);
 }
 
 Game::~Game()
@@ -224,12 +269,12 @@ void Game::drawMap()
     // Draw blocks
     const int square_size = 32;
     SDL_Rect rect;
-    for (int x = 0; x < static_cast<int>(map_.size()); ++x)
+    for (int row = 0; row < static_cast<int>(map_.size()); ++row)
     {
-        for (int y = 0; y < static_cast<int>(map_[x].size()); ++y)
+        for (int column = 0; column < static_cast<int>(map_[row].size()); ++column)
         {
             WallColor wall_color;
-            switch(map_[x][y])
+            switch(map_[row][column])
             {
                 case EMPTY_SPACE:
                     wall_color = { 160, 160, 160 };
@@ -248,7 +293,9 @@ void Game::drawMap()
                     break;
             }
             SDL_SetRenderDrawColor(renderer_.get(), wall_color.r, wall_color.g, wall_color.b, 255);
-            rect = {0 + square_size * x, 0 + square_size * y, square_size, square_size};
+
+            // Watch out: row/column is not the same as x/y. This was a source of a nasty bug.
+            rect = {0 + square_size * column, 0 + square_size * row, square_size, square_size};
             SDL_RenderFillRect(renderer_.get(), &rect);
             SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
             SDL_RenderDrawRect(renderer_.get(), &rect);
@@ -257,9 +304,10 @@ void Game::drawMap()
 
     // Draw player
     SDL_SetRenderDrawColor(renderer_.get(), 255, 255, 255, 255);
+    // HACK: need to change internal representation of the map instead switching x/y here
     rect = {
-        square_size * static_cast<int>(camera_.position().x) + square_size / 4, 
         square_size * static_cast<int>(camera_.position().y) + square_size / 4, 
+        square_size * static_cast<int>(camera_.position().x) + square_size / 4, 
         square_size / 2, square_size / 2
     };
     SDL_RenderFillRect(renderer_.get(), &rect);

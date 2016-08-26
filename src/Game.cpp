@@ -78,6 +78,9 @@ void Game::init()
     // TODO: error handling and cleanup code for multiple texture
 
     SDL_ShowCursor(SDL_DISABLE);
+
+    // Set camera options
+    camera_.rotationSpeed(CURSOR_TURN_SPEED);
 }
 
 Map Game::loadMap(const std::string& path)
@@ -247,8 +250,7 @@ void Game::event()
 
 void Game::update()
 {
-    camera_.movSpeed(movement_speed_);
-    camera_.rotSpeed(CURSOR_TURN_SPEED);
+    camera_.movementSpeed(movement_speed_);
 
     //SDL_SetWindowTitle(window_, 
     //        (std::to_string(camera_.xPos()) + ":" + std::to_string(camera_.yPos())).c_str());

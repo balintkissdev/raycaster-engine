@@ -40,8 +40,8 @@ class Camera
         /**
          * SETTERS
          */
-        void movSpeed(double mov_speed);
-        void rotSpeed(double rot_speed);
+        Camera& movementSpeed(double mov_speed);
+        Camera& rotationSpeed(double rot_speed);
 
     private:
         mymath::Vector2d<double> position_;

@@ -79,5 +79,5 @@ const mymath::Vector2d<double>& Camera::position() const { return position_; }
 const mymath::Vector2d<double>& Camera::direction() const { return direction_vector_; }
 const mymath::Vector2d<double>& Camera::plane() const { return plane_vector_; }
 
-void Camera::movSpeed(double mov_speed) { movement_speed_ = mov_speed; }
-void Camera::rotSpeed(double rot_speed) { rotation_speed_ = rot_speed; }
+Camera& Camera::movementSpeed(double mov_speed) { movement_speed_ = mov_speed; return *this; }
+Camera& Camera::rotationSpeed(double rot_speed) { rotation_speed_ = rot_speed; return *this; }

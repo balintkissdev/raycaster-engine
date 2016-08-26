@@ -34,7 +34,7 @@ void Game::init()
     }
 
     // TODO: Add selectable Hardware rendering capability
-    renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_SOFTWARE));
+    renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_ACCELERATED));
     if (!renderer_)
     {
         window_.reset();
@@ -123,27 +123,33 @@ Game::~Game()
     SDL_Quit();
 }
 
-// TODO: change timestep implementation
 void Game::run()
 {
     using namespace std::chrono;
-    const double NANOSECOND = 1000000000.0;
+    using namespace std::chrono_literals;
+
+    constexpr nanoseconds TIME_STEP(16ms); 
+
+    high_resolution_clock::time_point previous_time = high_resolution_clock::now();
+    nanoseconds lag(0ns);
 
     running_ = true;
     
-    high_resolution_clock::time_point current_time = high_resolution_clock::now();
-    high_resolution_clock::time_point previous_time;
-
     while (running_)
     {
-        previous_time = current_time;
-        current_time = high_resolution_clock::now();
-        double frame_time = duration_cast<nanoseconds>(current_time - previous_time).count() / NANOSECOND;
-        //SDL_SetWindowTitle(window_.get(), std::to_string(frame_time).c_str());
-        //SDL_SetWindowTitle(window_.get(), std::to_string(1.0 / frame_time).c_str());  // Print framerate
+        high_resolution_clock::time_point now = high_resolution_clock::now();
+        auto delta = now - previous_time;
+        previous_time = now;
+
+        lag += delta;
 
         event();
-        update(frame_time);
+        while (lag >= TIME_STEP)
+        {
+            update();
+            lag -= TIME_STEP;
+        }
+
         render();
     }
 }
@@ -239,10 +245,10 @@ void Game::event()
     }
 }
 
-void Game::update(const double frame_time)
+void Game::update()
 {
-    camera_.movSpeed(frame_time * movement_speed_);
-    camera_.rotSpeed(frame_time * CURSOR_TURN_SPEED);
+    camera_.movSpeed(movement_speed_);
+    camera_.rotSpeed(CURSOR_TURN_SPEED);
 
     //SDL_SetWindowTitle(window_, 
     //        (std::to_string(camera_.xPos()) + ":" + std::to_string(camera_.yPos())).c_str());

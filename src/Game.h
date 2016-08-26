@@ -15,9 +15,9 @@ typedef std::vector< std::vector<int> > Map;
 static const int WINDOW_WIDTH = 1024;
 static const int WINDOW_HEIGHT = 768;
 
-static const float BASE_MOVEMENT_SPEED = 7.0;
-static const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 4.0;
-static const float CURSOR_TURN_SPEED = 3.0;
+static const float BASE_MOVEMENT_SPEED = 0.035;
+static const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 0.04;
+static const float CURSOR_TURN_SPEED = 0.03;
 
 // FIXME: Game class has strict coupling to SDL
 class Game
@@ -61,7 +61,7 @@ class Game
         Map loadMap(const std::string& path);
 
         void event();
-        void update(const double frame_time);
+        void update();
         void render();
 
         void drawMap();

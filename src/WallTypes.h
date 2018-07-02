@@ -1,7 +1,7 @@
 #ifndef WALL_TYPES_H
 #define WALL_TYPES_H
 
-#include <SDL2/SDL.h>
+#include <cstdint>
 
 enum SquareType
 {
@@ -20,7 +20,7 @@ enum WallSide
 
 struct WallColor
 {
-    Uint8 r, g, b;
+    uint8_t red, green, blue;
 };
 
 #endif

@@ -14,10 +14,11 @@ endif()
 
 # Sources
 set(SRC
-    src/Main.cpp
-    src/Game.cpp
     src/Camera.cpp
+    src/Game.cpp
+    src/Main.cpp
     src/RayCaster.cpp
+    src/SDLRenderer.cpp
 )
 
 # Target bin folder

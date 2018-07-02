@@ -6,6 +6,7 @@
 int main(int argc, char **argv)
 {
     Game game;
+    // TODO: Remove exception handling
     try
     {
         game.init();

@@ -3,7 +3,7 @@
 
 #include <SDL2/SDL.h>
 
-struct SDL_Deleter
+struct SDLDeleter
 {
     void operator()(SDL_Window* window) { SDL_DestroyWindow(window); }
     void operator()(SDL_Renderer* render) { SDL_DestroyRenderer(render); }

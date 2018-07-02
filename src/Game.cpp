@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include <chrono>
 
+#include "SDLRenderer.h"
 #include "WallTypes.h"
 
 #ifdef _WIN32
@@ -14,70 +15,65 @@
     const char FILE_SEPARATOR = '/';
 #endif
 
+
+Game::Game()
+    : running_(false)
+    , map_{}
+    , overview_map_on(false)
+    , movement_speed_(BASE_MOVEMENT_SPEED)
+    , renderer_(new SDLRenderer)
+    , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
+    , camera_(4.5, 4.5, 1, 0, 0, -0.60, map_)
+{}
+
+Game::~Game()
+{
+    top_texture_.reset();
+    renderer_.reset();
+    SDL_Quit();
+}
+
 void Game::init()
 {
     // Initialize SDL window and renderer
-    SDL_Init(SDL_INIT_VIDEO);
-    window_.reset(SDL_CreateWindow(
-                "Press M for map, cursors to move and turn and WASD to move and strafe.",
-                SDL_WINDOWPOS_UNDEFINED,
-                SDL_WINDOWPOS_UNDEFINED,
-                WINDOW_WIDTH,
-                WINDOW_HEIGHT,
-                SDL_WINDOW_SHOWN
-            ));
-    if (!window_)
+    bool success = renderer_->initialize(
+            WINDOW_WIDTH,
+            WINDOW_HEIGHT,
+            "Press M for map, cursors to move and turn and "
+            "WASD to move and strafe."
+            );
+    if (!success)
     {
-        SDL_Quit();
-        std::string sdl_error_msg(SDL_GetError());
-        throw std::runtime_error("Error creating window: " + sdl_error_msg);
+        throw std::runtime_error(renderer_->errorMessage());
     }
-
-    // TODO: Add selectable Hardware rendering capability
-    renderer_.reset(SDL_CreateRenderer(window_.get(), -1, SDL_RENDERER_ACCELERATED));
-    if (!renderer_)
-    {
-        window_.reset();
-        std::string sdl_error_msg(SDL_GetError());
-        SDL_Quit();
-        throw std::runtime_error("Error creating renderer: " + sdl_error_msg);
-    }
-    SDL_GL_SetSwapInterval(0);
 
     // Load map
     try
     {
-        std::string map_path(std::string("resources") + FILE_SEPARATOR + "map" + FILE_SEPARATOR + "map.dat");
+        std::string map_path(
+                std::string("resources") + FILE_SEPARATOR + "map" +
+                FILE_SEPARATOR + "map.dat"
+                );
         map_ = loadMap(map_path);
     }
     catch (std::runtime_error& e)
     {
         renderer_.reset();
-        window_.reset();
         SDL_Quit();
         throw e;
     }
 
     // Load sky texture
-    top_texture_.reset(loadTexture(std::string("resources") + FILE_SEPARATOR + "textures" + FILE_SEPARATOR + "/dusk_sky_texture.bmp"));
+    top_texture_.reset(renderer_->loadTexture(
+                std::string("resources") + FILE_SEPARATOR + "textures" +
+                FILE_SEPARATOR + "/dusk_sky_texture.bmp"
+                ));
     if (!top_texture_)
     {
         renderer_.reset();
-        window_.reset();
-        std::string sdl_error_msg(SDL_GetError());
         SDL_Quit();
-        throw std::runtime_error("Error loading image: " + sdl_error_msg);
+        throw std::runtime_error("Error loading image: " + renderer_->errorMessage());
     }
-
-    // Load wall textures
-    //auto shared_surface_deleter = [](SDL_Surface* surface) { SDL_FreeSurface(surface); };   // HACK
-    //wall_textures_.emplace_back(loadSurface("resources/textures/brick1.bmp"), shared_surface_deleter);
-    //wall_textures_.emplace_back(loadSurface("resources/textures/brick2.bmp"), shared_surface_deleter);
-    //wall_textures_.emplace_back(loadSurface("resources/textures/stone1.bmp"), shared_surface_deleter);
-    //wall_textures_.emplace_back(loadSurface("resources/textures/stone2.bmp"), shared_surface_deleter);
-    // TODO: error handling and cleanup code for multiple texture
-
-    SDL_ShowCursor(SDL_DISABLE);
 
     // Set camera options
     camera_.rotationSpeed(CURSOR_TURN_SPEED);
@@ -113,31 +109,17 @@ Map Game::loadMap(const std::string& path)
     throw std::runtime_error("Unable to load map file: " + path);
 }
 
-Game::~Game()
-{
-    for (auto& t : wall_textures_)
-    {
-        t.reset();
-    }
-
-    top_texture_.reset();
-    renderer_.reset();
-    window_.reset();
-    SDL_Quit();
-}
-
 void Game::run()
 {
     using namespace std::chrono;
     using namespace std::chrono_literals;
 
-    constexpr nanoseconds TIME_STEP(16ms); 
+    constexpr nanoseconds TIME_STEP(16ms);
 
     high_resolution_clock::time_point previous_time = high_resolution_clock::now();
     nanoseconds lag(0ns);
 
     running_ = true;
-    
     while (running_)
     {
         high_resolution_clock::time_point now = high_resolution_clock::now();
@@ -157,39 +139,9 @@ void Game::run()
     }
 }
 
-SDL_Texture* Game::loadTexture(std::string path)
-{
-    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
-    SDL_Surface* tmp_surface = SDL_LoadBMP(absolute_path.c_str());
-    if (!tmp_surface)
-    {
-        return nullptr;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_.get(), tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-    return texture;
-}
-
-SDL_Surface* Game::loadSurface(std::string path)
-{
-    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
-    SDL_Surface* surface = SDL_LoadBMP(absolute_path.c_str());
-    if (surface)
-    {
-        surface = SDL_ConvertSurface(surface, SDL_GetWindowSurface(window_.get())->format, 0);
-
-        if (surface)
-        {
-            return surface;
-        }
-        SDL_FreeSurface(surface);
-    }
-
-    return nullptr;
-}
-
 void Game::event()
 {
+    // TODO: Decouple SDL event handling
     const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
 
     // FIXME: this code segment looks rather monolithic
@@ -251,32 +203,39 @@ void Game::event()
 void Game::update()
 {
     camera_.movementSpeed(movement_speed_);
-
-    //SDL_SetWindowTitle(window_, 
-    //        (std::to_string(camera_.xPos()) + ":" + std::to_string(camera_.yPos())).c_str());
 }
 
 void Game::render()
 {
-    // Clear
-    SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
-    SDL_RenderClear(renderer_.get());
+    renderer_->clearScreen();
 
-    raycaster_.drawCeilingAndFloor(renderer_.get(), top_texture_.get());
-    raycaster_.drawWalls(renderer_.get(), camera_, wall_textures_);
+    raycaster_.drawTop(renderer_.get(), top_texture_.get());
+    raycaster_.drawBottom(renderer_.get());
+    raycaster_.drawWalls(renderer_.get(), camera_);
 
-    if (overview_map_on) drawMap();
+    if (overview_map_on)
+    {
+      drawMap();
+    }
 
-    // Swap buffer
-    SDL_RenderPresent(renderer_.get());
+    renderer_->refreshScreen();
 }
 
 // TODO: this is a very basic map
 void Game::drawMap()
 {
+    struct Rectangle
+    {
+      int x_position;
+      int y_position;
+      int width;
+      int height;
+    };
+
+    Rectangle rect;
+
     // Draw blocks
     const int square_size = 32;
-    SDL_Rect rect;
     for (int row = 0; row < static_cast<int>(map_.size()); ++row)
     {
         for (int column = 0; column < static_cast<int>(map_[row].size()); ++column)
@@ -300,25 +259,25 @@ void Game::drawMap()
                     wall_color = { 255, 255, 0 };
                     break;
             }
-            SDL_SetRenderDrawColor(renderer_.get(), wall_color.r, wall_color.g, wall_color.b, 255);
+            renderer_->setDrawColor(wall_color.red, wall_color.green, wall_color.blue);
 
             // Watch out: row/column is not the same as x/y. This was a source of a nasty bug.
             rect = {0 + square_size * column, 0 + square_size * row, square_size, square_size};
-            SDL_RenderFillRect(renderer_.get(), &rect);
-            SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
-            SDL_RenderDrawRect(renderer_.get(), &rect);
+            renderer_->fillRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+            renderer_->setDrawColor(0, 0, 0);
+            renderer_->drawRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
         }
     }
 
     // Draw player
-    SDL_SetRenderDrawColor(renderer_.get(), 255, 255, 255, 255);
+    renderer_->setDrawColor(255, 255, 255);
     // HACK: need to change internal representation of the map instead switching x/y here
     rect = {
         square_size * static_cast<int>(camera_.position().y) + square_size / 4, 
         square_size * static_cast<int>(camera_.position().x) + square_size / 4, 
         square_size / 2, square_size / 2
     };
-    SDL_RenderFillRect(renderer_.get(), &rect);
-    SDL_SetRenderDrawColor(renderer_.get(), 0, 0, 0, 255);
-    SDL_RenderDrawRect(renderer_.get(), &rect);
+    renderer_->fillRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+    renderer_->setDrawColor(0, 0, 0, 255);
+    renderer_->drawRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
 }

@@ -2,7 +2,6 @@
 #define CAMERA_H
 
 #include <vector>
-#include <SDL2/SDL.h>
 
 #include "MathLib.h"
 

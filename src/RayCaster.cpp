@@ -1,56 +1,54 @@
 #include "RayCaster.h"
 
 #include "Camera.h"
+#include "IRenderer.h"
 
-const int TEXTURE_SIZE = 128;
+RayCaster::RayCaster(
+        const std::vector< std::vector<int> >& map,
+        const int width,
+        const int height
+)
+    : map_(map)
+    , width_(width)
+    , height_(height)
+{}
 
-using namespace mymath;
-
-void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer)
+void RayCaster::drawTop(IRenderer* renderer)
 {
-    // "Ceiling"
-    SDL_SetRenderDrawColor(renderer, 128, 128, 128, 255);
-    SDL_Rect rect = {0, 0, width_, height_/ 2};
-    SDL_RenderFillRect(renderer, &rect);
+    renderer->setDrawColor(128, 128, 128);
+    renderer->fillRectangle(0, 0, width_, height_ / 2);
+}
 
-    // "Floor"
-    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
-    rect = {0, height_ / 2, width_, height_};
-    SDL_RenderFillRect(renderer, &rect);
-};
-
-void RayCaster::drawCeilingAndFloor(SDL_Renderer* renderer, SDL_Texture* top_texture)
+void RayCaster::drawTop(IRenderer* renderer, SDL_Texture* top_texture)
 {
-    // Top
-    SDL_RenderCopy(renderer, top_texture, nullptr, nullptr);
+    renderer->drawTexture(top_texture);
+}
 
-    // Bottom   (TODO)
-    SDL_SetRenderDrawColor(renderer, 160, 160, 160, 255);
-    SDL_Rect rect = {0, height_ / 2, width_, height_};
-    SDL_RenderFillRect(renderer, &rect);
-};
+void RayCaster::drawBottom(IRenderer* renderer)
+{
+    renderer->setDrawColor(160, 160, 160);
+    renderer->fillRectangle(0, height_ / 2, width_, height_);
+}
 
 /**
  * Calculate how the screen should look to the user based on their position on the map
  */
-void RayCaster::drawWalls(SDL_Renderer* renderer, 
-        const Camera& camera,
-        const std::vector< std::shared_ptr<SDL_Surface> >& wall_textures)
+// TODO: Very long function
+void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
 {
-
     // Cast rays horizontally
     for (int x = 0; x < width_; ++x)
     {
         // x coordinate of current vertical stripe of camera plane
-        double camera_x = ((2 * x) / static_cast<double>(width_)) - 1;       
+        double camera_x = ((2 * x) / static_cast<double>(width_)) - 1;
 
         // Vectors for ray
-        Vector2d<double> ray_vector(camera.direction().x + camera.plane().x * camera_x, 
+        mymath::Vector2d<double> ray_vector(camera.direction().x + camera.plane().x * camera_x,
                                             camera.direction().y + camera.plane().y * camera_x);
 
         // Map position
-        Point2d<int> square_on_map(static_cast<int>(camera.position().x), 
-                                   static_cast<int>(camera.position().y));
+        mymath::Point2d<int> square_on_map(static_cast<int>(camera.position().x),
+                                           static_cast<int>(camera.position().y));
 
         // Length of ray from one side to next in map
         // TODO: Cleanup
@@ -139,13 +137,20 @@ void RayCaster::drawWalls(SDL_Renderer* renderer,
         // Create Cel Shader-like effect for walls
         // HACK: drawing over already drawn stripe is an unoptimalized way, needs work
         const int shade_stroke = 5;
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderDrawLine(renderer, x, draw_start, x, draw_start + shade_stroke);
-        SDL_RenderDrawLine(renderer, x, draw_end - shade_stroke, x, draw_end);
+        renderer->setDrawColor(0, 0, 0);
+        renderer->drawLine(x, draw_start, x, draw_start + shade_stroke);
+        renderer->drawLine(x, draw_end - shade_stroke, x, draw_end);
     }
 }
 
-inline void RayCaster::drawPlainColoredStripe(SDL_Renderer* renderer, const int x, const mymath::Point2d<int>& square_on_map, const int draw_start, const int draw_end, const int side)
+void RayCaster::drawPlainColoredStripe(
+    IRenderer* renderer,
+    const int x,
+    const mymath::Point2d<int>& square_on_map,
+    const int draw_start,
+    const int draw_end,
+    const int side
+)
 {
     WallColor wall_color;
     switch(map_[square_on_map.x][square_on_map.y])
@@ -164,28 +169,15 @@ inline void RayCaster::drawPlainColoredStripe(SDL_Renderer* renderer, const int 
             break;
     }
 
+    // Shade walls facing in other direction
     if (side == HORIZONTAL)
     {
-        wall_color.r = (wall_color.r >> 1) & 8355711;
-        wall_color.g = (wall_color.g >> 1) & 8355711;
-        wall_color.b = (wall_color.b >> 1) & 8355711;
+        wall_color.red    = (wall_color.red >> 1)   & 8355711;
+        wall_color.green  = (wall_color.green >> 1) & 8355711;
+        wall_color.blue   = (wall_color.blue >> 1)  & 8355711;
     }
 
-    SDL_SetRenderDrawColor(renderer, wall_color.r, wall_color.g, wall_color.b, 255);
-    SDL_RenderDrawLine(renderer, x, draw_start, x, draw_end);
+    renderer->setDrawColor(wall_color.red, wall_color.green, wall_color.blue);
+    renderer->drawLine(x, draw_start, x, draw_end);
 }
 
-// FIXME: unoptimized, slow
-WallColor RayCaster::extractPixelColor(SDL_Surface* wall, const mymath::Point2d<int>& pixel_position)
-{
-    SDL_LockSurface(wall);
-
-    Uint32* pixel_array = static_cast<Uint32*>(wall->pixels);
-    Uint32 pixel = pixel_array[(pixel_position.y * wall->w) + pixel_position.x];
-    WallColor color;
-    SDL_GetRGB(pixel, wall->format, &color.r, &color.g, &color.b);
-
-    SDL_UnlockSurface(wall);
-
-    return color;
-}

@@ -23,15 +23,13 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 
 ## How to build and run
 
-Just run `./install.sh` or
-
 1. `mkdir CMakeBuild && cmake ..`
 2. `make`
 3. `bin/Raycaster`
 
 For cross-compilation, you can use one of the CMake toolchain files.
 
-`TOOLCHAIN=CMake/toolchain/x86_64-w64-mingw32.cmake ./install.sh`
+`TOOLCHAIN=CMake/toolchain/x86_64-w64-mingw32.cmake cmake ..`
 
 ## References:
 

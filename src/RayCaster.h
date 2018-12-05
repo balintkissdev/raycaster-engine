@@ -1,15 +1,15 @@
 #ifndef RAYCASTER_H 
 #define RAYCASTER_H
 
-#include <vector>
-#include <memory>
-
 #include "WallTypes.h"
 #include "MathLib.h"
 #include "Camera.h"
 
+#include <SDL2/SDL.h>
+
+#include <vector>
+
 class IRenderer;
-class SDL_Texture;
 
 class RayCaster
 {

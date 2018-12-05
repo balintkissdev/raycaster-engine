@@ -18,18 +18,18 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 ## Requirements
 
 * C++14-standard compatible C++ compiler
-* CMake
-* [SDL2 library](https://www.libsdl.org/download-2.0.php) (apt-get install libsdl2-dev)
+* CMake 3.2 or newer
 
-## How to build and run
+That's all. The dependencies are automatically downloaded by [Hunter](https://github.com/ruslo/hunter/).
+
+## Build
 
 1. `mkdir CMakeBuild && cmake ..`
-2. `make`
-3. `bin/Raycaster`
+2. `cmake --build . --config Release`
 
 For cross-compilation, you can use one of the CMake toolchain files.
 
-`TOOLCHAIN=CMake/toolchain/x86_64-w64-mingw32.cmake cmake ..`
+`TOOLCHAIN=cmake/toolchain/x86_64-w64-mingw32.cmake cmake ..`
 
 ## References:
 

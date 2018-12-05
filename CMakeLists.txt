@@ -1,5 +1,12 @@
 # Project definition
 cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
+
+include("cmake/modules/HunterGate.cmake")
+HunterGate(
+    URL "https://github.com/ruslo/hunter/archive/v0.23.64.tar.gz"
+    SHA1 "a5f3c4999e03173d28b8469c4da4545dea740a41"
+)
+
 set(PROJECT_NAME Raycaster)
 set(PROJECT_VERSION "1.0-SNAPSHOT")
 project(${PROJECT_NAME} LANGUAGES CXX)
@@ -13,6 +20,18 @@ if (WIN32)
 endif()
 
 # Sources
+set(INCLUDE_DIR src)
+include_directories(${INCLUDE_DIR})
+set(HEADERS
+  src/Camera.h
+  src/Game.h
+  src/IRenderer.h
+  src/MathLib.h
+  src/RayCaster.h
+  src/SDLDeleter.h
+  src/SDLRenderer.h
+  src/WallTypes.h
+)
 set(SRC
     src/Camera.cpp
     src/Game.cpp
@@ -21,45 +40,18 @@ set(SRC
     src/SDLRenderer.cpp
 )
 
-# Target bin folder
-if (WIN32)
-    message("Target OS is Windows")
-    set(SDL2_PATH "${CMAKE_FIND_ROOT_PATH};${SDL2_PATH}")
-    message("SDL2_PATH: ${SDL2_PATH}")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/windows)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    message("Target OS is Mac")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/mac)
-elseif (${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-    message("Target OS is Linux")
-    set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin/linux)
-endif()
-
 # Dependencies
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/CMake/modules)
-find_package(SDL2 REQUIRED)
-INCLUDE_DIRECTORIES(${SDL2_INCLUDE_DIRS})
-
-# Copy resource files
-if (NOT PROJECT_SOURCE_DIR STREQUAL CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-    set(RESOURCES
-        README.md
-        resources/textures/dusk_sky_texture.bmp
-        resources/map/map.dat
-    )
-
-    foreach(f IN LISTS RESOURCES)
-        message(STATUS ${f})
-        add_custom_command(
-            OUTPUT "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${f}"
-            COMMAND ${CMAKE_COMMAND} -E copy "${PROJECT_SOURCE_DIR}/${f}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${f}"
-            DEPENDS "${PROJECT_SOURCE_DIR}/${f}"
-        )
-    endforeach()
-endif()
-
-add_custom_target(resources-target ALL DEPENDS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${RESOURCES}")
+hunter_add_package(SDL2)
+find_package(SDL2 CONFIG REQUIRED)
 
 # Create executable
-add_executable(${PROJECT_NAME} ${SRC})
-TARGET_LINK_LIBRARIES(${PROJECT_NAME} ${SDL2_LIBRARY})
+add_executable(${PROJECT_NAME} ${HEADERS} ${SRC})
+target_link_libraries(${PROJECT_NAME} SDL2::SDL2main SDL2::SDL2)
+
+# Copy resource files
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    "${PROJECT_SOURCE_DIR}/resources"
+    "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
+)

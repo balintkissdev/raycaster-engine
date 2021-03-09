@@ -1,13 +1,13 @@
 # Raycaster engine
 
-![alt tag](https://raw.githubusercontent.com/balintkiss501/raycaster-engine/master/demo.gif)
+![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo.png)
 
 My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra lib. One of the goals was to make raycasting computation equations more explicit and readable.
 
 ## Downloads
 
-* [Windows 64-bit executable](https://github.com/balintkiss501/raycaster-engine/releases/download/v0.0.1/raycaster-engine_windows_x86_64.zip)
-* [Linux 64-bit executable](https://github.com/balintkiss501/raycaster-engine/releases/download/v0.0.1/raycaster-engine_linux_x86_64.tar.gz)
+* [Windows 64-bit executable](https://github.com/balintkissdev/raycaster-engine/releases/download/v0.0.1/raycaster-engine_windows_x86_64.zip)
+* [Linux 64-bit executable](https://github.com/balintkissdev/raycaster-engine/releases/download/v0.0.1/raycaster-engine_linux_x86_64.tar.gz)
 
 ## Controls
 
@@ -24,8 +24,12 @@ That's all. The dependencies are automatically downloaded by [Hunter](https://gi
 
 ## Build
 
-1. `mkdir CMakeBuild && cmake ..`
-2. `cmake --build . --config Release`
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+```
 
 For cross-compilation, you can use one of the CMake toolchain files.
 
@@ -37,3 +41,4 @@ For cross-compilation, you can use one of the CMake toolchain files.
 * http://lodev.org/cgtutor/raycasting.html
 * http://www.instructables.com/id/Making-a-Basic-3D-Engine-in-Java
 * Free sky texture is from http://www.texturex.com
+* Free wall textures are from https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480

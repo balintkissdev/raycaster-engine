@@ -3,8 +3,8 @@ cmake_minimum_required(VERSION 3.2 FATAL_ERROR)
 
 include("cmake/modules/HunterGate.cmake")
 HunterGate(
-    URL "https://github.com/ruslo/hunter/archive/v0.23.64.tar.gz"
-    SHA1 "a5f3c4999e03173d28b8469c4da4545dea740a41"
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.296.tar.gz"
+    SHA1 "232f5022ee1d45955a7e8d3e1720f31bac1bb534"
 )
 
 set(PROJECT_NAME Raycaster)
@@ -28,7 +28,6 @@ set(HEADERS
   src/IRenderer.h
   src/MathLib.h
   src/RayCaster.h
-  src/SDLDeleter.h
   src/SDLRenderer.h
   src/WallTypes.h
 )

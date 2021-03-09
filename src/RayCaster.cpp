@@ -3,38 +3,56 @@
 #include "Camera.h"
 #include "IRenderer.h"
 
+#include <cstring>
+#include <iostream>
+
+uint32_t RayCaster::drawBuffer[768][1024] = {0};
+const uint8_t RayCaster::texture_width = 64;
+const uint8_t RayCaster::texture_height = 64;
+
 RayCaster::RayCaster(
-        const std::vector< std::vector<int> >& map,
-        const int width,
-        const int height
-)
-    : map_(map)
-    , width_(width)
-    , height_(height)
-{}
-
-void RayCaster::drawTop(IRenderer* renderer)
+    const std::vector<std::vector<int>> &map,
+    const int width,
+    const int height
+    )
+    : map_(map), width_(width), height_(height)
 {
-    renderer->setDrawColor(128, 128, 128);
-    renderer->fillRectangle(0, 0, width_, height_ / 2);
 }
 
-void RayCaster::drawTop(IRenderer* renderer, SDL_Texture* top_texture)
+bool RayCaster::initialize(IRenderer *renderer)
 {
-    renderer->drawTexture(top_texture);
+    bool success = renderer->createTexture(sky_texture_, 1024, 348, "resources/textures/dusk_sky_texture.bmp") &&
+        renderer->createTexture(wall_textures_[0], texture_width, texture_height, "resources/textures/wall0.bmp") &&
+        renderer->createTexture(wall_textures_[1], texture_width, texture_height, "resources/textures/wall1.bmp") &&
+        renderer->createTexture(wall_textures_[2], texture_width, texture_height, "resources/textures/wall2.bmp") &&
+        renderer->createTexture(wall_textures_[3], texture_width, texture_height, "resources/textures/wall3.bmp");
+
+    return success;
 }
 
-void RayCaster::drawBottom(IRenderer* renderer)
+void RayCaster::drawTop(IRenderer *renderer)
 {
-    renderer->setDrawColor(160, 160, 160);
-    renderer->fillRectangle(0, height_ / 2, width_, height_);
+    // HACK: Draw sky to buffer. Figure out copying hardware texture to other texture
+    memcpy(drawBuffer, sky_texture_.pixels.data(), sky_texture_.pitch * sky_texture_.height);
+}
+
+void RayCaster::drawBottom(IRenderer *renderer)
+{
+    // HACK: Draw grey floor to buffer
+    for (int x = 0; x < width_; ++x)
+    {
+        for (int y = (height_ / 2) + 1; y < height_; ++y)
+        {
+            drawBuffer[y][x] = (160 << 16) | (160 << 8) | 160;
+        }
+    }
 }
 
 /**
  * Calculate how the screen should look to the user based on their position on the map
  */
 // TODO: Very long function
-void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
+void RayCaster::drawWalls(IRenderer *renderer, const Camera &camera)
 {
     // Cast rays horizontally
     for (int x = 0; x < width_; ++x)
@@ -52,14 +70,14 @@ void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
 
         // Length of ray from one side to next in map
         // TODO: Cleanup
-        double delta_distance_x = sqrt( 1 + (ray_vector.y * ray_vector.y) / (ray_vector.x * ray_vector.x) );
-        double delta_distance_y = sqrt( 1 + (ray_vector.x * ray_vector.x) / (ray_vector.y * ray_vector.y) );
+        double delta_distance_x = sqrt(1 + (ray_vector.y * ray_vector.y) / (ray_vector.x * ray_vector.x));
+        double delta_distance_y = sqrt(1 + (ray_vector.x * ray_vector.x) / (ray_vector.y * ray_vector.y));
 
         // Length of ry from current position to next x or y-side
         double side_dist_x, side_dist_y;
 
         // Step direction and initial distance
-        int step_x, step_y;                 // Direction to go in x and y
+        int step_x, step_y; // Direction to go in x and y
         if (ray_vector.x < 0)
         {
             step_x = -1;
@@ -82,7 +100,7 @@ void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
         }
 
         // Scan where ray hits a wall (DDA)
-        int side = VERTICAL;                // Was the wall vertical or horizontal
+        int side = VERTICAL; // Was the wall vertical or horizontal
         bool is_wall_hit = false;
         while (!is_wall_hit)
         {
@@ -101,13 +119,14 @@ void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
             }
 
             // Check for hit
-            if (map_[square_on_map.x][square_on_map.y] != EMPTY_SPACE) {
+            if (map_[square_on_map.x][square_on_map.y] != EMPTY_SPACE)
+            {
                 is_wall_hit = true;
             }
         }
 
         // Calculate distance to the point of impact
-        double wall_to_player_distance;     // Distance from player and the first wall
+        double wall_to_player_distance; // Distance from player and the first wall
         if (side == VERTICAL)
         {
             wall_to_player_distance = (square_on_map.x - camera.position().x + (1 - step_x) / 2) / ray_vector.x;
@@ -132,52 +151,54 @@ void RayCaster::drawWalls(IRenderer* renderer, const Camera& camera)
             draw_end = height_ - 1;
         }
 
-        drawPlainColoredStripe(renderer, x, square_on_map, draw_start, draw_end, side);
+      // Texturing calculations
+      if (map_[square_on_map.x][square_on_map.y] != EMPTY_SPACE)
+      {
 
-        // Create Cel Shader-like effect for walls
-        // HACK: drawing over already drawn stripe is an unoptimalized way, needs work
-        const int shade_stroke = 5;
-        renderer->setDrawColor(0, 0, 0);
-        renderer->drawLine(x, draw_start, x, draw_start + shade_stroke);
-        renderer->drawLine(x, draw_end - shade_stroke, x, draw_end);
+        int textureIndex = map_[square_on_map.x][square_on_map.y] - 1; // 1 subtracted from it so that texture 0 can be used
+
+        double wall_hit_x; // Where exactly the wall was hit
+        if(side == VERTICAL)
+        {
+            wall_hit_x = camera.position().y + wall_to_player_distance * ray_vector.y;
+        }
+        else
+        {
+            wall_hit_x = camera.position().x + wall_to_player_distance * ray_vector.x;
+        }
+        wall_hit_x -= floor((wall_hit_x));
+
+        int texture_x_coordinate = int(wall_hit_x * double(texture_width));
+        if(side == VERTICAL && ray_vector.x  > 0)
+        {
+            texture_x_coordinate = texture_width - texture_x_coordinate - 1;
+        }
+        if(side == HORIZONTAL && ray_vector.y < 0)
+        {
+            texture_x_coordinate = texture_width - texture_x_coordinate - 1;
+        }
+
+        // How much to increase the texture coordinate per screen pixel
+        double step = 1.0 * texture_height / wall_stripe_height;
+        // Starting texture coordinate
+        double texPos = (draw_start - height_ / 2 + wall_stripe_height / 2) * step;
+        for(int y = draw_start; y < draw_end; y++)
+        {
+            // Cast the texture coordinate to integer, and mask with (texHeight - 1) in case of overflow
+            int texY = (int)texPos & (texture_height - 1);
+            texPos += step;
+            uint32_t color = wall_textures_[textureIndex].pixels[texture_height * texY + texture_x_coordinate];
+
+            // Shade horizontal sides darker
+            if(side == HORIZONTAL)
+            {
+                color = (color >> 1) & 8355711;
+            }
+
+            drawBuffer[y][x] = color;
+        }
+      }
     }
+
+    renderer->drawBuffer(drawBuffer[0]);
 }
-
-void RayCaster::drawPlainColoredStripe(
-    IRenderer* renderer,
-    const int x,
-    const mymath::Point2d<int>& square_on_map,
-    const int draw_start,
-    const int draw_end,
-    const int side
-)
-{
-    WallColor wall_color;
-    switch(map_[square_on_map.x][square_on_map.y])
-    {
-        case RED_WALL:
-            wall_color = { 255, 0, 0 };
-            break;
-        case GREEN_WALL:
-            wall_color = { 0, 255, 0 };
-            break;
-        case BLUE_WALL:
-            wall_color = { 0, 0, 255 };
-            break;
-        case YELLOW_WALL:
-            wall_color = { 255, 255, 0 };
-            break;
-    }
-
-    // Shade walls facing in other direction
-    if (side == HORIZONTAL)
-    {
-        wall_color.red    = (wall_color.red >> 1)   & 8355711;
-        wall_color.green  = (wall_color.green >> 1) & 8355711;
-        wall_color.blue   = (wall_color.blue >> 1)  & 8355711;
-    }
-
-    renderer->setDrawColor(wall_color.red, wall_color.green, wall_color.blue);
-    renderer->drawLine(x, draw_start, x, draw_end);
-}
-

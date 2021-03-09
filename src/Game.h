@@ -9,7 +9,6 @@
 #include "Camera.h"
 #include "IRenderer.h"
 #include "RayCaster.h"
-#include "SDLDeleter.h"  // TODO: Abstract away
 
 typedef std::vector< std::vector<int> > Map;
 
@@ -40,7 +39,6 @@ class Game
         Camera camera_;
 
         SDL_Event e_;
-        std::unique_ptr<SDL_Texture, SDLDeleter> top_texture_;
 
         Map loadMap(const std::string& path);
 

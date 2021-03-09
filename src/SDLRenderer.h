@@ -2,19 +2,15 @@
 #define SDLRENDERER_H
 
 #include "IRenderer.h"
-#include "SDLDeleter.h"
 
 #include <SDL2/SDL.h>
 
 #include <memory>
 
-struct SDL_Texture;
-
 class SDLRenderer : public IRenderer {
     public:
         SDLRenderer();
 
-        // IRenderer interface
         virtual ~SDLRenderer() override;
         virtual bool initialize(
                 const uint16_t screen_width,
@@ -42,17 +38,33 @@ class SDLRenderer : public IRenderer {
                 const int y_position,
                 const int width,
                 const int height) override;
-        virtual SDL_Texture* loadTexture(const std::string& path) override;
-        virtual void drawTexture(SDL_Texture* texture) override;
         virtual std::string errorMessage() const override;
+        virtual void drawBuffer(uint32_t *drawBuffer) override;
+        virtual bool createTexture(Texture& textureOut, const int width, const int height, const char* file) override;
 
     private:
-        using SDLWindowPtr = std::unique_ptr<SDL_Window, SDLDeleter>;
-        using SDLRendererPtr = std::unique_ptr<SDL_Renderer, SDLDeleter>;
+        struct SDLDeleter
+        {
+           void operator()(SDL_Window* window) { SDL_DestroyWindow(window); }
+           void operator()(SDL_Renderer* render) { SDL_DestroyRenderer(render); }
+           void operator()(SDL_Surface* surface) { SDL_FreeSurface(surface); }
+           void operator()(SDL_Texture* texture) { SDL_DestroyTexture(texture); }
+        };
+
+        template<typename SDLType>
+        using SDLPtr = std::unique_ptr<SDLType, SDLDeleter>;
+        using SDLSurfacePtr = SDLPtr<SDL_Surface>;
+
+        using SDLWindowPtr = SDLPtr<SDL_Window>;
+        using SDLRendererPtr = SDLPtr<SDL_Renderer>;
+        using SDLTexturePtr = SDLPtr<SDL_Texture>;
 
         SDLWindowPtr window_;
         SDLRendererPtr renderer_;
         std::string errorMessage_;
+        uint16_t screen_width_;
+        uint16_t screen_height_;
+        SDLTexturePtr streamableTexture_;
 };
 
 #endif  // SDLRENDERER_H

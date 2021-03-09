@@ -1,5 +1,8 @@
 #include "SDLRenderer.h"
 
+#include <cassert>
+#include <iostream>
+
 SDLRenderer::SDLRenderer() = default;
 
 SDLRenderer::~SDLRenderer() = default;
@@ -9,6 +12,9 @@ bool SDLRenderer::initialize(
         const uint16_t screen_height,
         const std::string& window_title)
 {
+    screen_width_ = screen_width;
+    screen_height_ = screen_height;
+
     if (0 != SDL_Init(SDL_INIT_VIDEO))
     {
         errorMessage_ = "Error initializing video: " + std::string(SDL_GetError());
@@ -36,6 +42,13 @@ bool SDLRenderer::initialize(
         return false;
     }
     SDL_ShowCursor(SDL_DISABLE);
+
+    streamableTexture_.reset(SDL_CreateTexture(renderer_.get(), SDL_GetWindowPixelFormat(window_.get()), SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height));
+    if (!streamableTexture_)
+    {
+        errorMessage_ = SDL_GetError();
+        return false;
+    }
 
     return true;
 }
@@ -89,27 +102,44 @@ void SDLRenderer::fillRectangle(
     SDL_RenderFillRect(renderer_.get(), &rect);
 }
 
-SDL_Texture* SDLRenderer::loadTexture(const std::string& path)
-{
-    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
-    SDL_Surface* tmp_surface = SDL_LoadBMP(absolute_path.c_str());
-    if (!tmp_surface)
-    {
-        errorMessage_ = std::string("Error loading texture: " + std::string(SDL_GetError()));
-        return nullptr;
-    }
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer_.get(), tmp_surface);
-    SDL_FreeSurface(tmp_surface);
-    return texture;
-}
-
-void SDLRenderer::drawTexture(SDL_Texture* texture)
-{
-    SDL_RenderCopy(renderer_.get(), texture, nullptr, nullptr);
-}
-
 std::string SDLRenderer::errorMessage() const
 {
     return errorMessage_;
 }
 
+void SDLRenderer::drawBuffer(uint32_t* drawBuffer)
+{
+    void *pixels = nullptr;
+    int pitch;
+    SDL_LockTexture(streamableTexture_.get(), nullptr, &pixels, &pitch);
+    memcpy(pixels, drawBuffer, pitch * 768);
+    SDL_UnlockTexture(streamableTexture_.get());
+
+    SDL_RenderCopy(renderer_.get(), streamableTexture_.get(), nullptr, nullptr);
+}
+
+bool SDLRenderer::createTexture(Texture& textureOut, const int width, const int height, const char* file)
+{
+    textureOut.pixels.resize(width * height);
+
+    std::string absolute_path = std::string(SDL_GetBasePath()) + std::string(file);
+    SDLSurfacePtr loaded_surface(SDL_LoadBMP(absolute_path.c_str()));
+    if (!loaded_surface )
+    {
+        std::cout << SDL_GetError() << std::endl;
+        return false;
+    }
+
+    SDLSurfacePtr converted_surface(SDL_ConvertSurfaceFormat(loaded_surface.get(), SDL_GetWindowPixelFormat(window_.get()), 0));
+    if (!converted_surface)
+    {
+        errorMessage_ = std::string("Error loading texture: " + std::string(SDL_GetError()));
+        return false;
+    }
+
+    memcpy(textureOut.pixels.data(), converted_surface->pixels, converted_surface->pitch * converted_surface->h);
+    textureOut.width = width;
+    textureOut.height = height;
+    textureOut.pitch = converted_surface->pitch;
+    return true;
+}

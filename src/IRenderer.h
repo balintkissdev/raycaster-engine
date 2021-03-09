@@ -1,10 +1,9 @@
 #ifndef IRENDERER_H
 #define IRENDERER_H
 
-#include <string>
+#include "Texture.h"
 
-// TODO: Avoid using SDL-specific data
-class SDL_Texture;
+#include <string>
 
 // TODO: Comment interface
 class IRenderer {
@@ -36,9 +35,9 @@ class IRenderer {
                 const int y_position,
                 const int width,
                 const int height) = 0;
-        virtual SDL_Texture* loadTexture(const std::string& path) = 0;
-        virtual void drawTexture(SDL_Texture* texture) = 0;
         virtual std::string errorMessage() const = 0;
+        virtual void drawBuffer(uint32_t *drawBuffer) = 0;
+        virtual bool createTexture(Texture& textureOut, const int width, const int height, const char* file) = 0;
 };
 
 #endif  // IRENDERER_H

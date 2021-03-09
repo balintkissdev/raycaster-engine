@@ -21,14 +21,13 @@ Game::Game()
     , map_{}
     , overview_map_on(false)
     , movement_speed_(BASE_MOVEMENT_SPEED)
-    , renderer_(new SDLRenderer)
+    , renderer_(std::make_unique<SDLRenderer>())
     , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
     , camera_(4.5, 4.5, 1, 0, 0, -0.60, map_)
 {}
 
 Game::~Game()
 {
-    top_texture_.reset();
     renderer_.reset();
     SDL_Quit();
 }
@@ -63,16 +62,9 @@ void Game::init()
         throw e;
     }
 
-    // Load sky texture
-    top_texture_.reset(renderer_->loadTexture(
-                std::string("resources") + FILE_SEPARATOR + "textures" +
-                FILE_SEPARATOR + "/dusk_sky_texture.bmp"
-                ));
-    if (!top_texture_)
+    if (!raycaster_.initialize(renderer_.get()))
     {
-        renderer_.reset();
-        SDL_Quit();
-        throw std::runtime_error("Error loading image: " + renderer_->errorMessage());
+        throw std::runtime_error("Error initializing raycaster engine.");
     }
 
     // Set camera options
@@ -209,7 +201,7 @@ void Game::render()
 {
     renderer_->clearScreen();
 
-    raycaster_.drawTop(renderer_.get(), top_texture_.get());
+    raycaster_.drawTop(renderer_.get());
     raycaster_.drawBottom(renderer_.get());
     raycaster_.drawWalls(renderer_.get(), camera_);
 
@@ -222,6 +214,7 @@ void Game::render()
 }
 
 // TODO: this is a very basic map
+// TODO: Move this into RayCaster
 void Game::drawMap()
 {
     struct Rectangle

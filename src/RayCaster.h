@@ -25,7 +25,7 @@ class RayCaster
         bool initialize(IRenderer* renderer);
 
         void drawTop(IRenderer* renderer);
-        void drawBottom(IRenderer* renderer);
+        void drawBottom(IRenderer* renderer, const Camera& camera);
         void drawWalls(IRenderer* renderer, const Camera& camera);
 
     private:
@@ -36,6 +36,7 @@ class RayCaster
         int width_, height_;
 
         Texture sky_texture_;
+        Texture floor_texture_;
         Texture wall_textures_[4];
 };
 

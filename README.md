@@ -1,6 +1,6 @@
 # Raycaster engine
 
-![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo.png)
+![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo.gif)
 
 My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra lib. One of the goals was to make raycasting computation equations more explicit and readable.
 

@@ -202,7 +202,7 @@ void Game::render()
     renderer_->clearScreen();
 
     raycaster_.drawTop(renderer_.get());
-    raycaster_.drawBottom(renderer_.get());
+    raycaster_.drawBottom(renderer_.get(), camera_);
     raycaster_.drawWalls(renderer_.get(), camera_);
 
     if (overview_map_on)

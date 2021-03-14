@@ -21,13 +21,12 @@ RayCaster::RayCaster(
 
 bool RayCaster::initialize(IRenderer *renderer)
 {
-    bool success = renderer->createTexture(sky_texture_, 1024, 348, "resources/textures/dusk_sky_texture.bmp") &&
+    return renderer->createTexture(sky_texture_, 1024, 348, "resources/textures/dusk_sky_texture.bmp") &&
+        renderer->createTexture(floor_texture_, texture_width, texture_height, "resources/textures/floor.bmp") &&
         renderer->createTexture(wall_textures_[0], texture_width, texture_height, "resources/textures/wall0.bmp") &&
         renderer->createTexture(wall_textures_[1], texture_width, texture_height, "resources/textures/wall1.bmp") &&
         renderer->createTexture(wall_textures_[2], texture_width, texture_height, "resources/textures/wall2.bmp") &&
         renderer->createTexture(wall_textures_[3], texture_width, texture_height, "resources/textures/wall3.bmp");
-
-    return success;
 }
 
 void RayCaster::drawTop(IRenderer *renderer)
@@ -36,14 +35,38 @@ void RayCaster::drawTop(IRenderer *renderer)
     memcpy(drawBuffer, sky_texture_.pixels.data(), sky_texture_.pitch * sky_texture_.height);
 }
 
-void RayCaster::drawBottom(IRenderer *renderer)
+void RayCaster::drawBottom(IRenderer *renderer, const Camera &camera)
 {
-    // HACK: Draw grey floor to buffer
-    for (int x = 0; x < width_; ++x)
+    for (int y = height_ / 2 + 1; y < height_; ++y)
     {
-        for (int y = (height_ / 2) + 1; y < height_; ++y)
+        mymath::Vector2d<float> leftmostRayDirection(camera.direction().x - camera.plane().x,
+                                                camera.direction().y - camera.plane().y);
+        mymath::Vector2d<float> rightmostRayDirection(camera.direction().x + camera.plane().x,
+                                                camera.direction().y + camera.plane().y);
+
+        int screenCenterDistance = y - height_ / 2;
+        float cameraVerticalPosition = 0.5 * height_;
+        float cameraToRowDistance = cameraVerticalPosition / screenCenterDistance;
+
+        float floorStepX = cameraToRowDistance * (rightmostRayDirection.x - leftmostRayDirection.x) / width_;
+        float floorStepY = cameraToRowDistance * (rightmostRayDirection.y - leftmostRayDirection.y) / width_;
+
+        float floorX = camera.position().x + cameraToRowDistance * leftmostRayDirection.x;
+        float floorY = camera.position().y + cameraToRowDistance * leftmostRayDirection.y;
+
+        for (int x = 0; x < width_; ++x)
         {
-            drawBuffer[y][x] = (160 << 16) | (160 << 8) | 160;
+            int cellX = (int)(floorX);
+            int cellY = (int)(floorY);
+
+            int texcoordX = (int)(texture_width * (floorX - cellX)) & (texture_width - 1);
+            int texcoordY = (int)(texture_height * (floorY - cellY)) & (texture_height - 1);
+
+            floorX += floorStepX;
+            floorY += floorStepY;
+
+            uint32_t texel = floor_texture_.pixels[texture_width * texcoordY + texcoordX];
+            drawBuffer[y][x] = texel;
         }
     }
 }

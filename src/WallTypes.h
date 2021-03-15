@@ -3,6 +3,7 @@
 
 #include <cstdint>
 
+// TODO: Not relevant since texturing, so these will be removed.
 enum SquareType
 {
     EMPTY_SPACE,
@@ -18,6 +19,7 @@ enum WallSide
     HORIZONTAL
 };
 
+// TODO: Not relevant since texturing, so these will be removed.
 struct WallColor
 {
     uint8_t red, green, blue;

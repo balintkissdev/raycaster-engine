@@ -1,16 +1,20 @@
 target_sources(${PROJECT_NAME}
     PRIVATE
-        Camera.cpp
         Camera.h
-        Game.cpp
+        Camera.cpp
         Game.h
+        Game.cpp
         IRenderer.h
-        Main.cpp
-        MathLib.h
-        RayCaster.cpp
+        Matrix2.h
+        Matrix2.inl
+        Map.h
+        Map.cpp
         RayCaster.h
-        SDLRenderer.cpp
+        RayCaster.cpp
         SDLRenderer.h
+        SDLRenderer.cpp
         Texture.h
+        Vector2.h
+        Vector2.inl
         WallTypes.h
 )

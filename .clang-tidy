@@ -1,0 +1,17 @@
+---
+Checks: "bugprone-*,clang-diagnostic-*,clang-analyzer-*,modernize-*,-modernize-use-trailing-return-type,performance-*,readability-*,-readability-avoid-const-params-in-decls,-readability-implicit-bool-conversion,-readability-magic-numbers,-readability-uppercase-literal-suffix"
+WarningsAsErrors: ""
+HeaderFilterRegex: ""
+CheckOptions:
+  - key: readability-identifier-naming.LocalConstantCase
+    value: "camelBack"
+  - key: readability-identifier-naming.ConstantParameterCase
+    value: "camelBack"
+  - key: readability-identifier-naming.GlobalConstantCase
+    value: "UPPER_CASE"
+  - key: readability-identifier-naming.VariableCase
+    value: "camelBack"
+  - key: readability-identifier-naming.ProtectedMemberSuffix
+    value: "_"
+  - key: readability-identifier-naming.PrivateMemberSuffix
+    value: "_"

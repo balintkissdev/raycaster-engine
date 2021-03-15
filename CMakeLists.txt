@@ -17,6 +17,21 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
 
+find_program(
+    CLANG_TIDY_EXE
+    NAMES clang-tidy
+)
+if (CLANG_TIDY_EXE)
+    message(STATUS "clang-tidy found: ${CLANG_TIDY_EXE}")
+    set(DO_CLANG_TIDY
+        "${CLANG_TIDY_EXE}"
+        "--header-filter=src/*"
+    )
+    set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${DO_CLANG_TIDY}")
+else()
+    message(STATUS "clang-tidy not found.")
+endif()
+
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
     target_link_options(${PROJECT_NAME} PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)

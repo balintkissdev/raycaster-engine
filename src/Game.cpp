@@ -1,23 +1,19 @@
 #include "Game.h"
 
+#include "SDLRenderer.h"
+#include "WallTypes.h"
+
+#include <SDL2/SDL.h>
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten.h>
 #endif
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <stdexcept>
 #include <chrono>
-
-#include "SDLRenderer.h"
-#include "WallTypes.h"
-
-#ifdef _WIN32
-    const char FILE_SEPARATOR = '\\';
-#else
-    const char FILE_SEPARATOR = '/';
-#endif
+#include <cstdlib>
+#include <fstream>
+#include <iostream>
+#include <sstream>
 
 #ifdef __EMSCRIPTEN__
 extern "C" void emscriptenCallback(Game* game)
@@ -27,14 +23,12 @@ extern "C" void emscriptenCallback(Game* game)
 #endif
 
 Game::Game()
-    : running_(false)
-    , map_{}
-    , overview_map_on(false)
-    , movement_speed_(BASE_MOVEMENT_SPEED)
+    : camera_(INITIAL_POSITION, INITIAL_DIRECTION, INITIAL_FIELD_OF_VIEW, map_)
+    , raycaster_(camera_, map_)
     , renderer_(std::make_unique<SDLRenderer>())
-    , raycaster_(map_, WINDOW_WIDTH, WINDOW_HEIGHT)
-    , camera_(4.5, 4.5, 1, 0, 0, -0.60, map_)
-{}
+    , movementSpeed_(BASE_MOVEMENT_SPEED)
+{
+}
 
 Game::~Game()
 {
@@ -42,76 +36,38 @@ Game::~Game()
     SDL_Quit();
 }
 
-void Game::init()
+bool Game::init()
 {
-    // Initialize SDL window and renderer
-    bool success = renderer_->initialize(
-            WINDOW_WIDTH,
-            WINDOW_HEIGHT,
-            "Press M for map, cursors to move and turn and "
-            "WASD to move and strafe."
-            );
+    bool success = renderer_->init(
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        "Press M for map, cursors to move and turn and "
+        "WASD to move and strafe.");
     if (!success)
     {
-        throw std::runtime_error(renderer_->errorMessage());
+        return false;
+    }
+    atexit(SDL_Quit);
+
+    std::optional<Map> map = Map::create("resources/map/map.dat");
+    if (!map.has_value())
+    {
+        return false;
+    }
+    map_ = map.value();
+
+    if (!raycaster_.init(*renderer_))
+    {
+        std::cerr << "Error initializing raycaster engine." << std::endl;
+        return false;
     }
 
-    // Load map
-    try
-    {
-        std::string map_path(
-                std::string("resources") + FILE_SEPARATOR + "map" +
-                FILE_SEPARATOR + "map.dat"
-                );
-        map_ = loadMap(map_path);
-    }
-    catch (std::runtime_error& e)
-    {
-        renderer_.reset();
-        SDL_Quit();
-        throw e;
-    }
-
-    if (!raycaster_.initialize(renderer_.get()))
-    {
-        throw std::runtime_error("Error initializing raycaster engine.");
-    }
-
-    // Set camera options
     camera_.rotationSpeed(CURSOR_TURN_SPEED);
+
+    return true;
 }
 
-Map Game::loadMap(const std::string& path)
-{
-    std::string absolute_path = std::string(SDL_GetBasePath()) + path.c_str();
-    std::ifstream file(absolute_path, std::ios::in);
-    if (file)
-    {
-        std::string line;
-        std::vector< std::vector<int> > map;
-        while (std::getline(file, line))
-        {
-            std::vector<int> row;
-            std::stringstream current_line(line);
-            int i;
-            while (current_line >> i)
-            {
-                if (current_line.peek() == ' ' || current_line.peek() == ',')
-                {
-                    current_line.ignore();
-                }
-                row.push_back(i);
-            }
-
-            map.push_back(row);
-        }
-
-        return map;
-    }
-    throw std::runtime_error("Unable to load map file: " + path);
-}
-
-void Game::run()
+int Game::run()
 {
     running_ = true;
 #ifdef __EMSCRIPTEN__
@@ -120,29 +76,30 @@ void Game::run()
     using namespace std::chrono;
     using namespace std::chrono_literals;
 
-    constexpr nanoseconds TIME_STEP(16ms);
+    constexpr nanoseconds timeStep(16ms);
 
-    high_resolution_clock::time_point previous_time = high_resolution_clock::now();
+    high_resolution_clock::time_point previousTime = high_resolution_clock::now();
     nanoseconds lag(0ns);
 
     while (running_)
     {
-        high_resolution_clock::time_point now = high_resolution_clock::now();
-        auto delta = now - previous_time;
-        previous_time = now;
-
-        lag += delta;
+        high_resolution_clock::time_point currentTime = high_resolution_clock::now();
+        auto elapsedTime = currentTime - previousTime;
+        previousTime = currentTime;
+        lag += elapsedTime;
 
         event();
-        while (lag >= TIME_STEP)
+        while (lag >= timeStep)
         {
             update();
-            lag -= TIME_STEP;
+            lag -= timeStep;
         }
 
         render();
     }
 #endif
+
+    return EXIT_SUCCESS;
 }
 
 #ifdef __EMSCRIPTEN__
@@ -157,58 +114,60 @@ void Game::runEmscriptenIteration()
 void Game::event()
 {
     // TODO: Decouple SDL event handling
-    const Uint8 * keystate = SDL_GetKeyboardState(nullptr);
+    const Uint8* keystate = SDL_GetKeyboardState(nullptr);
 
     // FIXME: this code segment looks rather monolithic
     if (keystate[SDL_SCANCODE_LSHIFT])
     {
-        movement_speed_ = RUN_MOVEMENT_SPEED;
+        movementSpeed_ = RUN_MOVEMENT_SPEED;
     }
     else
     {
-        movement_speed_ = BASE_MOVEMENT_SPEED;
+        movementSpeed_ = BASE_MOVEMENT_SPEED;
     }
 
     if (keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W])
     {
-        camera_.moveForward();
+        camera_.move(Camera::DIRECTION_FORWARD);
     }
     if (keystate[SDL_SCANCODE_DOWN] || keystate[SDL_SCANCODE_S])
     {
-        camera_.moveBackward();
+        camera_.move(Camera::DIRECTION_BACKWARD);
     }
     if (keystate[SDL_SCANCODE_LEFT])
     {
-        camera_.turnLeft();
+        camera_.turn(Camera::DIRECTION_LEFT);
     }
     if (keystate[SDL_SCANCODE_RIGHT])
     {
-        camera_.turnRight();
+        camera_.turn(Camera::DIRECTION_RIGHT);
     }
     if (keystate[SDL_SCANCODE_A])
     {
-        camera_.strafeLeft();
+        camera_.strafe(Camera::DIRECTION_LEFT);
     }
     if (keystate[SDL_SCANCODE_D])
     {
-        camera_.strafeRight();
+        camera_.strafe(Camera::DIRECTION_RIGHT);
     }
-    while (SDL_PollEvent(&e_))
+
+    SDL_Event e;
+    while (SDL_PollEvent(&e))
     {
-        switch (e_.type)
+        switch (e.type)
         {
             case SDL_QUIT:
                 running_ = false;
                 break;
 
             case SDL_KEYDOWN:
-                switch (e_.key.keysym.sym)
+                switch (e.key.keysym.sym)
                 {
                     case SDLK_ESCAPE:
                         running_ = false;
                         break;
                     case SDLK_m:
-                        overview_map_on = !overview_map_on;
+                        overviewMapOn_ = !overviewMapOn_;
                         break;
                 }
         }
@@ -217,20 +176,18 @@ void Game::event()
 
 void Game::update()
 {
-    camera_.movementSpeed(movement_speed_);
+    camera_.movementSpeed(movementSpeed_);
 }
 
 void Game::render()
 {
     renderer_->clearScreen();
 
-    raycaster_.drawTop(renderer_.get());
-    raycaster_.drawBottom(renderer_.get(), camera_);
-    raycaster_.drawWalls(renderer_.get(), camera_);
+    raycaster_.drawEverything(*renderer_);
 
-    if (overview_map_on)
+    if (overviewMapOn_)
     {
-      drawMap();
+        drawMap();
     }
 
     renderer_->refreshScreen();
@@ -240,48 +197,51 @@ void Game::render()
 // TODO: Move this into RayCaster
 void Game::drawMap()
 {
+    static const WallColor grey = {160, 160, 160};
+    static const WallColor red = {255, 0, 0};
+    static const WallColor green = {0, 255, 0};
+    static const WallColor blue = {0, 0, 255};
+    static const WallColor yellow = {255, 255, 0};
+
     struct Rectangle
     {
-      int x_position;
-      int y_position;
-      int width;
-      int height;
+        size_t x;
+        size_t y;
+        size_t width;
+        size_t height;
     };
 
     Rectangle rect;
 
     // Draw blocks
-    const int square_size = 32;
-    for (int row = 0; row < static_cast<int>(map_.size()); ++row)
+    const size_t squareSize = 32;
+    for (size_t row = 0; row < map_.rowCount(); ++row)
     {
-        for (int column = 0; column < static_cast<int>(map_[row].size()); ++column)
+        for (size_t column = 0; column < map_.columnCount(); ++column)
         {
-            WallColor wall_color;
-            switch(map_[row][column])
+            WallColor wallColor = grey;
+            switch (map_.position(row, column))
             {
-                case EMPTY_SPACE:
-                    wall_color = { 160, 160, 160 };
-                    break;
                 case RED_WALL:
-                    wall_color = { 255, 0, 0 };
+                    wallColor = red;
                     break;
                 case GREEN_WALL:
-                    wall_color = { 0, 255, 0 };
+                    wallColor = green;
                     break;
                 case BLUE_WALL:
-                    wall_color = { 0, 0, 255 };
+                    wallColor = blue;
                     break;
                 case YELLOW_WALL:
-                    wall_color = { 255, 255, 0 };
+                    wallColor = yellow;
                     break;
             }
-            renderer_->setDrawColor(wall_color.red, wall_color.green, wall_color.blue);
+            renderer_->setDrawColor(wallColor.red, wallColor.green, wallColor.blue);
 
             // Watch out: row/column is not the same as x/y. This was a source of a nasty bug.
-            rect = {0 + square_size * column, 0 + square_size * row, square_size, square_size};
-            renderer_->fillRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+            rect = {0 + squareSize * column, 0 + squareSize * row, squareSize, squareSize};
+            renderer_->fillRectangle(rect.x, rect.y, rect.width, rect.height);
             renderer_->setDrawColor(0, 0, 0);
-            renderer_->drawRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+            renderer_->drawRectangle(rect.x, rect.y, rect.width, rect.height);
         }
     }
 
@@ -289,11 +249,22 @@ void Game::drawMap()
     renderer_->setDrawColor(255, 255, 255);
     // HACK: need to change internal representation of the map instead switching x/y here
     rect = {
-        square_size * static_cast<int>(camera_.position().y) + square_size / 4, 
-        square_size * static_cast<int>(camera_.position().x) + square_size / 4, 
-        square_size / 2, square_size / 2
-    };
-    renderer_->fillRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+        squareSize * static_cast<int>(camera_.position().y) + squareSize / 4,
+        squareSize * static_cast<int>(camera_.position().x) + squareSize / 4,
+        squareSize / 2,
+        squareSize / 2};
+    renderer_->fillRectangle(rect.x, rect.y, rect.width, rect.height);
     renderer_->setDrawColor(0, 0, 0, 255);
-    renderer_->drawRectangle(rect.x_position, rect.y_position, rect.width, rect.height);
+    renderer_->drawRectangle(rect.x, rect.y, rect.width, rect.height);
+}
+
+int main(int /*argc*/, char** /*argv*/)
+{
+    Game game;
+    if (!game.init())
+    {
+        return EXIT_FAILURE;
+    }
+
+    return game.run();
 }

@@ -9,7 +9,7 @@ struct Texture
     size_t width;
     size_t height;
     size_t pitch;
-    std::vector<uint32_t> pixels;
+    std::vector<uint32_t> texels;
 };
 
 #endif

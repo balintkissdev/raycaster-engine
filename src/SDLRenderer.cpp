@@ -1,37 +1,32 @@
 #include "SDLRenderer.h"
 
-#include <cassert>
-#include <iostream>
+#include "Texture.h"
 
-SDLRenderer::SDLRenderer() = default;
+#include <iostream>
 
 SDLRenderer::~SDLRenderer() = default;
 
-bool SDLRenderer::initialize(
-        const uint16_t screen_width,
-        const uint16_t screen_height,
-        const std::string& window_title)
+bool SDLRenderer::init(const uint16_t screenWidth, const uint16_t screenHeight, const std::string& windowTitle)
 {
-    screen_width_ = screen_width;
-    screen_height_ = screen_height;
+    screenWidth_ = screenWidth;
+    screenHeight_ = screenHeight;
 
     if (0 != SDL_Init(SDL_INIT_VIDEO))
     {
-        errorMessage_ = "Error initializing video: " + std::string(SDL_GetError());
+        std::cerr << "Error initializing video: " + std::string(SDL_GetError());
         return false;
     }
 
     window_.reset(SDL_CreateWindow(
-                window_title.c_str(),
-                SDL_WINDOWPOS_UNDEFINED,
-                SDL_WINDOWPOS_UNDEFINED,
-                screen_width,
-                screen_height,
-                SDL_WINDOW_SHOWN
-                ));
+        windowTitle.c_str(),
+        SDL_WINDOWPOS_UNDEFINED,
+        SDL_WINDOWPOS_UNDEFINED,
+        screenWidth,
+        screenHeight,
+        SDL_WINDOW_SHOWN));
     if (!window_)
     {
-        errorMessage_ = "Error creating window: " + std::string(SDL_GetError());
+        std::cerr << "Error creating window: " + std::string(SDL_GetError());
         return false;
     }
 
@@ -44,19 +39,34 @@ bool SDLRenderer::initialize(
     ));
     if (!renderer_)
     {
-        errorMessage_ = "Error creating renderer: " + std::string(SDL_GetError());
+        std::cerr << "Error creating renderer: " + std::string(SDL_GetError());
         return false;
     }
     SDL_ShowCursor(SDL_DISABLE);
 
-    streamableTexture_.reset(SDL_CreateTexture(renderer_.get(), SDL_GetWindowPixelFormat(window_.get()), SDL_TEXTUREACCESS_STREAMING, screen_width, screen_height));
+    streamableTexture_.reset(SDL_CreateTexture(
+        renderer_.get(),
+        SDL_GetWindowPixelFormat(window_.get()),
+        SDL_TEXTUREACCESS_STREAMING,
+        screenWidth,
+        screenHeight));
     if (!streamableTexture_)
     {
-        errorMessage_ = SDL_GetError();
+        std::cerr << SDL_GetError();
         return false;
     }
 
     return true;
+}
+
+uint16_t SDLRenderer::screenWidth() const
+{
+    return screenWidth_;
+}
+
+uint16_t SDLRenderer::screenHeight() const
+{
+    return screenHeight_;
 }
 
 void SDLRenderer::clearScreen()
@@ -70,82 +80,61 @@ void SDLRenderer::refreshScreen()
     SDL_RenderPresent(renderer_.get());
 }
 
-void SDLRenderer::setDrawColor(
-        const uint8_t red,
-        const uint8_t green,
-        const uint8_t blue,
-        const uint8_t alpha)
+void SDLRenderer::setDrawColor(const uint8_t red, const uint8_t green, const uint8_t blue, const uint8_t alpha)
 {
     SDL_SetRenderDrawColor(renderer_.get(), red, green, blue, alpha);
 }
 
-void SDLRenderer::drawLine(
-        const int x_start,
-        const int y_start,
-        const int x_end,
-        const int y_end)
+void SDLRenderer::drawLine(const int xStart, const int yStart, const int xEnd, const int yEnd)
 {
-    SDL_RenderDrawLine(renderer_.get(), x_start, y_start, x_end, y_end);
+    SDL_RenderDrawLine(renderer_.get(), xStart, yStart, xEnd, yEnd);
 }
 
-void SDLRenderer::drawRectangle(
-        const int x_position,
-        const int y_position,
-        const int width,
-        const int height)
+void SDLRenderer::drawRectangle(const int x, const int y, const int width, const int height)
 {
-    const SDL_Rect rect{x_position, y_position, width, height};
+    const SDL_Rect rect{x, y, width, height};
     SDL_RenderDrawRect(renderer_.get(), &rect);
 }
 
-void SDLRenderer::fillRectangle(
-        const int x_position,
-        const int y_position,
-        const int width,
-        const int height)
+void SDLRenderer::fillRectangle(const int x, const int y, const int width, const int height)
 {
-    const SDL_Rect rect{x_position, y_position, width, height};
+    const SDL_Rect rect{x, y, width, height};
     SDL_RenderFillRect(renderer_.get(), &rect);
-}
-
-std::string SDLRenderer::errorMessage() const
-{
-    return errorMessage_;
 }
 
 void SDLRenderer::drawBuffer(uint32_t* drawBuffer)
 {
-    void *pixels = nullptr;
-    int pitch;
-    SDL_LockTexture(streamableTexture_.get(), nullptr, &pixels, &pitch);
-    memcpy(pixels, drawBuffer, pitch * 768);
+    void* streamableTexturePixels = nullptr;
+    int streamableTexturePitch;
+    SDL_LockTexture(streamableTexture_.get(), nullptr, &streamableTexturePixels, &streamableTexturePitch);
+    memcpy(streamableTexturePixels, drawBuffer, streamableTexturePitch * screenHeight_);
     SDL_UnlockTexture(streamableTexture_.get());
 
     SDL_RenderCopy(renderer_.get(), streamableTexture_.get(), nullptr, nullptr);
 }
 
-bool SDLRenderer::createTexture(Texture& textureOut, const int width, const int height, const char* file)
+std::optional<Texture> SDLRenderer::createTexture(const std::string& textureFilePath)
 {
-    textureOut.pixels.resize(width * height);
-
-    std::string absolute_path = std::string(SDL_GetBasePath()) + std::string(file);
-    SDLSurfacePtr loaded_surface(SDL_LoadBMP(absolute_path.c_str()));
-    if (!loaded_surface )
+    SDLSurfacePtr loadedSurface(SDL_LoadBMP(textureFilePath.c_str()));
+    if (!loadedSurface)
     {
         std::cout << SDL_GetError() << std::endl;
-        return false;
+        return std::nullopt;
     }
 
-    SDLSurfacePtr converted_surface(SDL_ConvertSurfaceFormat(loaded_surface.get(), SDL_GetWindowPixelFormat(window_.get()), 0));
-    if (!converted_surface)
+    SDLSurfacePtr convertedSurface(
+        SDL_ConvertSurfaceFormat(loadedSurface.get(), SDL_GetWindowPixelFormat(window_.get()), 0));
+    if (!convertedSurface)
     {
-        errorMessage_ = std::string("Error loading texture: " + std::string(SDL_GetError()));
-        return false;
+        std::cerr << std::string("Error loading texture: " + std::string(SDL_GetError()));
+        return std::nullopt;
     }
 
-    memcpy(textureOut.pixels.data(), converted_surface->pixels, converted_surface->pitch * converted_surface->h);
-    textureOut.width = width;
-    textureOut.height = height;
-    textureOut.pitch = converted_surface->pitch;
-    return true;
+    Texture texture;
+    texture.width = convertedSurface->w;
+    texture.height = convertedSurface->h;
+    texture.pitch = convertedSurface->pitch;
+    texture.texels.resize(texture.width * texture.height);
+    memcpy(texture.texels.data(), convertedSurface->pixels, texture.pitch * texture.height);
+    return texture;
 }

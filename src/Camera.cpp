@@ -1,83 +1,79 @@
 #include "Camera.h"
 
-void Camera::moveForward()
+#include "Matrix2.h"
+#include "WallTypes.h"
+
+Camera::Camera(const Vector2<float>& position, const Vector2<float>& direction, const float fieldOfView, Map& map)
+    : map_(map)
+    , position_(position)
+    , direction_(direction)
+    , plane_{0.f, -0.01f * fieldOfView}
+    , movementSpeed_(0.f)
+    , rotationSpeed_(0.f)
 {
-    if (map_[static_cast<int>(position_.x + direction_vector_.x * movement_speed_)]
-            [static_cast<int>(position_.y)] == 0)
+}
+
+void Camera::move(const float moveDirection)
+{
+    if (map_.position(
+            static_cast<int>(position_.x + moveDirection * (direction_.x * movementSpeed_)),
+            static_cast<int>(position_.y)) == EMPTY_SPACE)
     {
-        position_.x += direction_vector_.x * movement_speed_;
+        position_.x += moveDirection * (direction_.x * movementSpeed_);
     }
-    if (map_[static_cast<int>(position_.x)]
-            [static_cast<int>(position_.y + direction_vector_.y * movement_speed_)] == 0 )
+    if (map_.position(
+            static_cast<int>(position_.x),
+            static_cast<int>(position_.y + moveDirection * (direction_.y * movementSpeed_))) == EMPTY_SPACE)
     {
-        position_.y += direction_vector_.y * movement_speed_;
+        position_.y += moveDirection * (direction_.y * movementSpeed_);
     }
 }
 
-// FIXME: boilerplate code
-void Camera::moveBackward()
+void Camera::turn(const float turnDirection)
 {
-    if (map_[static_cast<int>(position_.x - direction_vector_.x * movement_speed_)]
-            [static_cast<int>(position_.y)] == 0 )
-    {
-        position_.x -= direction_vector_.x * movement_speed_;
-    }
+    direction_ = Matrix::rotate(direction_, turnDirection * rotationSpeed_);
+    plane_ = Matrix::rotate(plane_, turnDirection * rotationSpeed_);
+}
 
-    if (map_[static_cast<int>(position_.x)]
-            [static_cast<int>(position_.y - direction_vector_.y * movement_speed_)] == 0 )
+void Camera::strafe(const float strafeDirection)
+{
+    if (map_.position(
+            static_cast<int>(position_.x - strafeDirection * (plane_.x * movementSpeed_)),
+            static_cast<int>(position_.y)) == EMPTY_SPACE)
     {
-        position_.y -= direction_vector_.y * movement_speed_;
+        position_.x -= strafeDirection * (plane_.x * movementSpeed_);
+    }
+    if (map_.position(
+            static_cast<int>(position_.x),
+            static_cast<int>(position_.y - strafeDirection * (plane_.y * movementSpeed_))) == EMPTY_SPACE)
+    {
+        position_.y -= strafeDirection * (plane_.y * movementSpeed_);
     }
 }
 
-// Rotation: direction and plane vectors are multiplied by rotation matrix
-// Rotation matrix is:
-//      [ cos(ROTATION_SPEED) -sin(ROTATION_SPEED) ]
-//      [ sin(ROTATION_SPEED) cos(ROTATION_SPEED) ]
-void Camera::turnLeft()
+const Vector2<float>& Camera::position() const
 {
-    direction_vector_ = mymath::rotate(direction_vector_, rotation_speed_);
-    plane_vector_ = mymath::rotate(plane_vector_, rotation_speed_);
+    return position_;
 }
 
-void Camera::turnRight()
+const Vector2<float>& Camera::direction() const
 {
-    direction_vector_ = mymath::rotate(direction_vector_, -rotation_speed_);
-    plane_vector_ = mymath::rotate(plane_vector_, -rotation_speed_);
+    return direction_;
 }
 
-void Camera::strafeLeft()
+const Vector2<float>& Camera::plane() const
 {
-    if (map_[static_cast<int>(position_.x - plane_vector_.x * movement_speed_)]
-            [static_cast<int>(position_.y)] == 0)
-    {
-        position_.x -= plane_vector_.x * movement_speed_;
-    }
-    if (map_[static_cast<int>(position_.x)]
-            [static_cast<int>(position_.y - plane_vector_.y * movement_speed_)] == 0 )
-    {
-        position_.y -= plane_vector_.y * movement_speed_;
-    }
+    return plane_;
 }
 
-void Camera::strafeRight()
+Camera& Camera::movementSpeed(const float movementSpeed)
 {
-    if (map_[static_cast<int>(position_.x + plane_vector_.x * movement_speed_)]
-            [static_cast<int>(position_.y)] == 0 )
-    {
-        position_.x += plane_vector_.x * movement_speed_;
-    }
-
-    if (map_[static_cast<int>(position_.x)]
-            [static_cast<int>(position_.y + plane_vector_.y * movement_speed_)] == 0 )
-    {
-        position_.y += plane_vector_.y * movement_speed_;
-    }
+    movementSpeed_ = movementSpeed;
+    return *this;
 }
 
-const mymath::Vector2d<double>& Camera::position() const { return position_; }
-const mymath::Vector2d<double>& Camera::direction() const { return direction_vector_; }
-const mymath::Vector2d<double>& Camera::plane() const { return plane_vector_; }
-
-Camera& Camera::movementSpeed(double mov_speed) { movement_speed_ = mov_speed; return *this; }
-Camera& Camera::rotationSpeed(double rot_speed) { rotation_speed_ = rot_speed; return *this; }
+Camera& Camera::rotationSpeed(const float rotationSpeed)
+{
+    rotationSpeed_ = rotationSpeed;
+    return *this;
+}

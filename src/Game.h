@@ -1,56 +1,53 @@
 #ifndef GAME_H
 #define GAME_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <SDL2/SDL.h> // TODO: Abstract away
 
 #include "Camera.h"
 #include "IRenderer.h"
+#include "Map.h"
 #include "RayCaster.h"
-
-typedef std::vector< std::vector<int> > Map;
-
-static const int WINDOW_WIDTH = 1024;
-static const int WINDOW_HEIGHT = 768;
-
-static const float BASE_MOVEMENT_SPEED = 0.035;
-static const float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 0.04;
-static const float CURSOR_TURN_SPEED = 0.03;
 
 class Game
 {
-    public:
-        Game();
-        ~Game();
+public:
+    Game();
+    ~Game();
 
-        void init();
-        void run();
+    bool init();
+    int run();
 
 #ifdef __EMSCRIPTEN__
-        void runEmscriptenIteration();
+    void runEmscriptenIteration();
 #endif
 
-    private:
-        bool running_;
-        Map map_;
-        bool overview_map_on;
-        float movement_speed_;
+private:
+    static constexpr uint16_t WINDOW_WIDTH = 1024;
+    static constexpr uint16_t WINDOW_HEIGHT = 768;
 
-        std::unique_ptr<IRenderer> renderer_;
-        RayCaster raycaster_;
-        Camera camera_;
+    static constexpr float BASE_MOVEMENT_SPEED = 0.035f;
+    static constexpr float RUN_MOVEMENT_SPEED = BASE_MOVEMENT_SPEED + 0.04f;
+    static constexpr float CURSOR_TURN_SPEED = 0.03f;
 
-        SDL_Event e_;
+    static constexpr Vector2<float> INITIAL_POSITION = {4.5f, 4.5f};
+    static constexpr Vector2<float> INITIAL_DIRECTION = {1.f, 0.f};
+    static constexpr float INITIAL_FIELD_OF_VIEW = 60.f;
 
-        Map loadMap(const std::string& path);
+    Camera camera_;
+    RayCaster raycaster_;
+    Map map_;
+    std::unique_ptr<IRenderer> renderer_;
+    float movementSpeed_;
+    bool running_{false};
+    bool overviewMapOn_{false};
 
-        void event();
-        void update();
-        void render();
+    void event();
+    void update();
+    void render();
 
-        void drawMap();
+    void drawMap();
 };
 
 #endif

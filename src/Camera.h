@@ -1,53 +1,47 @@
 #ifndef CAMERA_H
 #define CAMERA_H
 
+#include <cstdint>
 #include <vector>
 
-#include "MathLib.h"
+#include "Map.h"
+#include "Vector2.h"
 
 class Camera
 {
-    public:
-        Camera(const double x, const double y, 
-                const double xd, const double yd,
-                const double xp, const double yp,
-                const std::vector< std::vector<int> >& map)
-            : position_(x, y)
-            , direction_vector_{xd, yd}
-            , plane_vector_{xp, yp}
-            , movement_speed_(0.0), rotation_speed_(0.0)
-            , map_(map)
-            {}
+public:
+    static constexpr float DIRECTION_FORWARD = 1.f;
+    static constexpr float DIRECTION_BACKWARD = -1.f;
+    static constexpr float DIRECTION_LEFT = 1.f;
+    static constexpr float DIRECTION_RIGHT = -1.f;
 
-        /**
-         * CONTROLS
-         */
-        void moveForward();
-        void moveBackward();
-        void turnLeft();
-        void turnRight();
-        void strafeLeft();
-        void strafeRight();
+    Camera(const Vector2<float>& position, const Vector2<float>& direction, const float fieldOfView, Map& map);
 
-        /**
-         * GETTERS
-         */
-        const mymath::Vector2d<double>& position() const;
-        const mymath::Vector2d<double>& direction() const;
-        const mymath::Vector2d<double>& plane() const;
+    void move(const float moveDirection);
+    void turn(const float turnDirection);
+    void strafe(const float strafeDirection);
 
-        /**
-         * SETTERS
-         */
-        Camera& movementSpeed(double mov_speed);
-        Camera& rotationSpeed(double rot_speed);
+    [[nodiscard]] const Vector2<float>& position() const;
 
-    private:
-        mymath::Vector2d<double> position_;
-        mymath::Vector2d<double> direction_vector_;
-        mymath::Vector2d<double> plane_vector_;
-        double movement_speed_, rotation_speed_;
-        const std::vector< std::vector<int> >& map_;       // TODO: change to pointer
+    /**
+     * Direction where the camera points to.
+     */
+    [[nodiscard]] const Vector2<float>& direction() const;
+
+    /**
+     * Perpendicular to the direction vector and points to the farthest edge of the camera's field of view.
+     */
+    [[nodiscard]] const Vector2<float>& plane() const;
+
+    Camera& movementSpeed(const float movementSpeed);
+    Camera& rotationSpeed(const float rotationSpeed);
+
+private:
+    Map& map_;
+    Vector2<float> position_;
+    Vector2<float> direction_;
+    Vector2<float> plane_;
+    float movementSpeed_, rotationSpeed_;
 };
 
 #endif

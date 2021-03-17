@@ -1,0 +1,16 @@
+target_sources(${PROJECT_NAME}
+    PRIVATE
+        src/Camera.cpp
+        src/Camera.h
+        src/Game.cpp
+        src/Game.h
+        src/IRenderer.h
+        src/Main.cpp
+        src/MathLib.h
+        src/RayCaster.cpp
+        src/RayCaster.h
+        src/SDLRenderer.cpp
+        src/SDLRenderer.h
+        src/Texture.h
+        src/WallTypes.h
+)

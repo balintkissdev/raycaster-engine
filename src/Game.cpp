@@ -1,5 +1,9 @@
 #include "Game.h"
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
+
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -15,6 +19,12 @@
     const char FILE_SEPARATOR = '/';
 #endif
 
+#ifdef __EMSCRIPTEN__
+extern "C" void emscriptenCallback(Game* game)
+{
+    game->runEmscriptenIteration();
+}
+#endif
 
 Game::Game()
     : running_(false)
@@ -103,6 +113,10 @@ Map Game::loadMap(const std::string& path)
 
 void Game::run()
 {
+    running_ = true;
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg(reinterpret_cast<em_arg_callback_func>(emscriptenCallback), this, 0, true);
+#else
     using namespace std::chrono;
     using namespace std::chrono_literals;
 
@@ -111,7 +125,6 @@ void Game::run()
     high_resolution_clock::time_point previous_time = high_resolution_clock::now();
     nanoseconds lag(0ns);
 
-    running_ = true;
     while (running_)
     {
         high_resolution_clock::time_point now = high_resolution_clock::now();
@@ -129,7 +142,17 @@ void Game::run()
 
         render();
     }
+#endif
 }
+
+#ifdef __EMSCRIPTEN__
+void Game::runEmscriptenIteration()
+{
+    event();
+    update();
+    render();
+}
+#endif
 
 void Game::event()
 {

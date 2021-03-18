@@ -2,6 +2,8 @@
 
 ![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo.gif)
 
+[Live demo](https://balintkissdev.github.io/raycaster-engine)
+
 My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra lib. One of the goals was to make raycasting computation equations more explicit and readable.
 
 ## Controls
@@ -29,6 +31,19 @@ cmake --build . --config Release
 For cross-compilation, you can use one of the CMake toolchain files.
 
 `TOOLCHAIN=cmake/toolchain/x86_64-w64-mingw32.cmake cmake ..`
+
+### Emscripten support
+
+This project can be built with Emscripten in order to be embedded in HTML. After you
+[set up the Emscripten environment](https://emscripten.org/docs/getting_started/downloads.html),
+issue these commands:
+
+```bash
+mkdir build
+cd build
+emcmake cmake ..
+emmake make
+```
 
 ## References:
 

@@ -28,6 +28,10 @@ class Game
         void init();
         void run();
 
+#ifdef __EMSCRIPTEN__
+        void runEmscriptenIteration();
+#endif
+
     private:
         bool running_;
         Map map_;

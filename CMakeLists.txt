@@ -12,23 +12,19 @@ project(${PROJECT_NAME} VERSION 0.0.2)
 
 add_executable(${PROJECT_NAME} "")
 
-# Must be set after project() command
-hunter_add_package(SDL2)
-find_package(SDL2 CONFIG REQUIRED)
-
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 17
     CXX_STANDARD_REQUIRED YES
 )
 
-if (MSVC)
+if(MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE /W4)
     target_link_options(${PROJECT_NAME} PRIVATE /SUBSYSTEM:WINDOWS /ENTRY:mainCRTStartup)
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -Wall -Wextra -pedantic)
 endif()
 
-if (WIN32)
+if(WIN32)
     if (MINGW)
         target_link_options(${PROJECT_NAME} -static-libgcc -static-libstdc++)
     endif()
@@ -38,17 +34,38 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 add_subdirectory(src)
 
-# Hunter SDL2 package uses static linking
-target_link_libraries(${PROJECT_NAME} SDL2::SDL2main SDL2::SDL2)
-
 # Copy resource files
 add_custom_command(
     TARGET ${PROJECT_NAME}
-    POST_BUILD
+    PRE_LINK    # Needed for Emscripten preload
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${PROJECT_SOURCE_DIR}/resources"
         "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
 )
+
+# TODO: Remove exceptions
+if(EMSCRIPTEN)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        SUFFIX ".html"
+    )
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        -O3
+        -fexceptions
+        "SHELL: -s USE_SDL=2"
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        "SHELL: -s DISABLE_EXCEPTION_CATCHING=0"
+        "SHELL: -s USE_SDL=2"
+        --preload-file "resources"
+        --shell-file "${PROJECT_SOURCE_DIR}/src/shell_minimal.html"
+    )
+else()
+    hunter_add_package(SDL2)
+    find_package(SDL2 CONFIG REQUIRED)
+
+    # Hunter SDL2 package uses static linking
+    target_link_libraries(${PROJECT_NAME} SDL2::SDL2main SDL2::SDL2)
+endif()
 
 set(CPACK_PACKAGE_NAME "Raycaster")
 set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})

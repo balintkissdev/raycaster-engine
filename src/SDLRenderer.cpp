@@ -35,7 +35,13 @@ bool SDLRenderer::initialize(
         return false;
     }
 
-    renderer_.reset(SDL_CreateRenderer(window_.get(), -1, 0));
+    renderer_.reset(SDL_CreateRenderer(window_.get(), -1,
+#ifdef __EMSCRIPTEN__
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC    // TODO: Not sure if makes difference in speed.
+#else
+        0
+#endif
+    ));
     if (!renderer_)
     {
         errorMessage_ = "Error creating renderer: " + std::string(SDL_GetError());

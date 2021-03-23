@@ -65,11 +65,9 @@ if(EMSCRIPTEN)
     )
     target_compile_options(${PROJECT_NAME} PRIVATE
         -O3
-        -fexceptions
         "SHELL: -s USE_SDL=2"
     )
     target_link_options(${PROJECT_NAME} PRIVATE
-        "SHELL: -s DISABLE_EXCEPTION_CATCHING=0"
         "SHELL: -s USE_SDL=2"
         --preload-file "resources"
         --shell-file "${PROJECT_SOURCE_DIR}/src/shell_minimal.html"

@@ -1,0 +1,58 @@
+name: Raycaster CI
+
+on: [push, pull_request]
+
+jobs:
+  executable-build:
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config:
+          - { name: "Ubuntu Latest GCC", os: ubuntu-latest, cxx: g++, cc: gcc }
+          - {
+              name: "Windows Latest MSVC",
+              os: windows-latest,
+              cxx: cl.exe,
+              cc: cl.exe,
+            }
+
+    steps:
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Set compiler environment
+        uses: lukka/set-shell-env@v1
+        with:
+          CXX: ${{ matrix.config.cxx }}
+          CC: ${{ matrix.config.cc }}
+
+      - name: Set compiler environment for Windows
+        if: matrix.config.os == 'windows-latest'
+        uses: lukka/set-shell-env@v1
+        with:
+          VS160COMNTOOLS: C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\Common7\Tools
+
+      - name: Checkout
+        uses: actions/checkout@v2.0.0
+
+      - uses: lukka/get-cmake@latest
+
+      - name: Build project
+        uses: lukka/run-cmake@v3
+        with:
+          cmakeAppendedArgs: "-DCMAKE_BUILD_TYPE=Release"
+          buildDirectory: "${{ github.workspace }}/build/"
+
+      - name: Generate package
+        run: |
+          cd build
+          cpack -C "Release"
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            build/*.tar.gz
+            build/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

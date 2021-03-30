@@ -14,7 +14,7 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 
 ## Requirements
 
-- C++14-standard compatible C++ compiler
+- C++17-standard compatible C++ compiler
 - CMake 3.16 or newer
 
 That's all. The dependencies are automatically downloaded by [Hunter](https://github.com/ruslo/hunter/).

@@ -51,7 +51,7 @@ void RayCaster::drawBottom()
 
         const size_t screenCenterDistance = y - screenHeight_ / 2;
         const float cameraVerticalPosition = 0.5f * static_cast<float>(screenHeight_);
-        const float cameraToRowDistance = cameraVerticalPosition / screenCenterDistance;
+        const float cameraToRowDistance = cameraVerticalPosition / static_cast<float>(screenCenterDistance);
 
         const Vector2<float> floorStep =
             cameraToRowDistance * (rightmostRayDirection - leftmostRayDirection) / static_cast<float>(screenWidth_);
@@ -63,8 +63,12 @@ void RayCaster::drawBottom()
             const Vector2<size_t> cell = {static_cast<size_t>(floor.x), static_cast<size_t>(floor.y)};
 
             const Vector2<size_t> texCoord = {
-                static_cast<size_t>(bottomTexture_->width * (floor.x - cell.x)) & (bottomTexture_->width - 1),
-                static_cast<size_t>(bottomTexture_->height * (floor.y - cell.y)) & (bottomTexture_->height - 1)};
+                static_cast<size_t>(
+                    static_cast<float>(bottomTexture_->width) * (floor.x - static_cast<float>(cell.x))) &
+                    (bottomTexture_->width - 1),
+                static_cast<size_t>(
+                    static_cast<float>(bottomTexture_->height) * (floor.y - static_cast<float>(cell.y))) &
+                    (bottomTexture_->height - 1)};
 
             floor += floorStep;
 
@@ -115,22 +119,22 @@ std::pair<Vector2<int>, Vector2<float>> RayCaster::calculateInitialStep(
     if (rayDirection.x < 0)
     {
         stepDirection.x = -1;
-        sideDistance.x = (camera_.position().x - mapSquarePosition.x) * rayStepDistance.x;
+        sideDistance.x = (camera_.position().x - static_cast<float>(mapSquarePosition.x)) * rayStepDistance.x;
     }
     else
     {
         stepDirection.x = 1;
-        sideDistance.x = (mapSquarePosition.x + 1.0 - camera_.position().x) * rayStepDistance.x;
+        sideDistance.x = (static_cast<float>(mapSquarePosition.x) + 1.0f - camera_.position().x) * rayStepDistance.x;
     }
     if (rayDirection.y < 0)
     {
         stepDirection.y = -1;
-        sideDistance.y = (camera_.position().y - mapSquarePosition.y) * rayStepDistance.y;
+        sideDistance.y = (camera_.position().y - static_cast<float>(mapSquarePosition.y)) * rayStepDistance.y;
     }
     else
     {
         stepDirection.y = 1;
-        sideDistance.y = (mapSquarePosition.y + 1.0 - camera_.position().y) * rayStepDistance.y;
+        sideDistance.y = (static_cast<float>(mapSquarePosition.y) + 1.0f - camera_.position().y) * rayStepDistance.y;
     }
 
     return {stepDirection, sideDistance};
@@ -178,11 +182,12 @@ float RayCaster::calculateWallDistance(
     const Vector2<int>& stepDirection,
     const Vector2<float>& rayDirection)
 {
-    return (side == VERTICAL)
-               ? ((mapSquarePosition.x - camera_.position().x + static_cast<float>(1 - stepDirection.x) / 2) /
-                  rayDirection.x)
-               : ((mapSquarePosition.y - camera_.position().y + static_cast<float>(1 - stepDirection.y) / 2) /
-                  rayDirection.y);
+    return (side == VERTICAL) ? ((static_cast<float>(mapSquarePosition.x) - camera_.position().x +
+                                  static_cast<float>(1 - stepDirection.x) / 2) /
+                                 rayDirection.x)
+                              : ((static_cast<float>(mapSquarePosition.y) - camera_.position().y +
+                                  static_cast<float>(1 - stepDirection.y) / 2) /
+                                 rayDirection.y);
 }
 
 std::pair<int, int> RayCaster::calculateDrawLocations(const int wallColumnHeight) const
@@ -226,7 +231,7 @@ void RayCaster::drawTexturedColumn(
     }
     wallHitX -= std::floor((wallHitX));
 
-    auto texCoordX = static_cast<size_t>(wallHitX * wallTexture.width);
+    auto texCoordX = static_cast<size_t>(wallHitX * static_cast<float>(wallTexture.width));
     if (side == VERTICAL && ray.x > 0)
     {
         texCoordX = wallTexture.width - texCoordX - 1;
@@ -237,7 +242,8 @@ void RayCaster::drawTexturedColumn(
     }
 
     // How much to increase the texture coordinate per screen pixel
-    const float texCoordIncreaseStep = 1.0f * wallTexture.height / static_cast<float>(wallColumnHeight);
+    const float texCoordIncreaseStep =
+        1.0f * static_cast<float>(wallTexture.height) / static_cast<float>(wallColumnHeight);
     float startingTexCoordY = (static_cast<float>(drawStart) - static_cast<float>(screenHeight_) / 2 +
                                static_cast<float>(wallColumnHeight) / 2) *
                               texCoordIncreaseStep;

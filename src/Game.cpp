@@ -239,9 +239,17 @@ void Game::drawMap()
 
             // Watch out: row/column is not the same as x/y. This was a source of a nasty bug.
             rect = {0 + squareSize * column, 0 + squareSize * row, squareSize, squareSize};
-            renderer_->fillRectangle(rect.x, rect.y, rect.width, rect.height);
+            renderer_->fillRectangle(
+                static_cast<int>(rect.x),
+                static_cast<int>(rect.y),
+                static_cast<int>(rect.width),
+                static_cast<int>(rect.height));
             renderer_->setDrawColor(0, 0, 0);
-            renderer_->drawRectangle(rect.x, rect.y, rect.width, rect.height);
+            renderer_->drawRectangle(
+                static_cast<int>(rect.x),
+                static_cast<int>(rect.y),
+                static_cast<int>(rect.width),
+                static_cast<int>(rect.height));
         }
     }
 
@@ -253,9 +261,17 @@ void Game::drawMap()
         squareSize * static_cast<int>(camera_.position().x) + squareSize / 4,
         squareSize / 2,
         squareSize / 2};
-    renderer_->fillRectangle(rect.x, rect.y, rect.width, rect.height);
+    renderer_->fillRectangle(
+        static_cast<int>(rect.x),
+        static_cast<int>(rect.y),
+        static_cast<int>(rect.width),
+        static_cast<int>(rect.height));
     renderer_->setDrawColor(0, 0, 0, 255);
-    renderer_->drawRectangle(rect.x, rect.y, rect.width, rect.height);
+    renderer_->drawRectangle(
+        static_cast<int>(rect.x),
+        static_cast<int>(rect.y),
+        static_cast<int>(rect.width),
+        static_cast<int>(rect.height));
 }
 
 int main(int /*argc*/, char** /*argv*/)

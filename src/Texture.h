@@ -1,6 +1,7 @@
 #ifndef TEXTURE_H
 #define TEXTURE_H
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 

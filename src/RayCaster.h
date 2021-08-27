@@ -4,7 +4,6 @@
 #include "Camera.h"
 #include "Map.h"
 #include "Texture.h"
-#include "WallTypes.h"
 
 #include <array>
 #include <optional>
@@ -19,13 +18,27 @@ public:
 
     bool init(IRenderer& renderer);
     void drawEverything(IRenderer& renderer);
+    void toggleMapDraw();
 
 private:
+    enum class WallSide
+    {
+        VERTICAL,
+        HORIZONTAL
+    };
+
+    static constexpr size_t MAP_SQUARE_SIZE = 32;
     static constexpr uint32_t DARKEN_MASK = 8355711;
+
+    static constexpr uint32_t rgbToUint32(const uint8_t r, const uint8_t g, const uint8_t b);
 
     void drawTop();
     void drawBottom();
     void drawWalls();
+    void drawMap();
+    void drawMapSquares();
+    void drawMapPlayer();
+    void drawMapDebugLines(const Vector2<float>& mapPlayerPosition);
 
     std::pair<Vector2<int>, Vector2<float>> calculateInitialStep(
         const Vector2<int>& mapSquarePosition,
@@ -63,6 +76,7 @@ private:
         const int drawEnd);
 
     void plotPixel(const uint16_t x, const uint16_t y, const uint32_t pixel);
+    Texture* mapIndexToWallTexture(const size_t index);
 
     Camera& camera_;
     Map& map_;
@@ -71,6 +85,11 @@ private:
     std::array<std::optional<Texture>, 4> wallTextures_;
     std::vector<uint32_t> drawBuffer_;
     uint16_t screenWidth_, screenHeight_;
+
+    bool overviewMapOn_{false};
+    float cameraLineDistance_;
+    float planeLeftDistance_;
+    float planeRightDistance_;
 };
 
 #endif

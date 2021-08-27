@@ -1,7 +1,7 @@
 #ifndef MAP_H
 #define MAP_H
 
-#include <Vector2.h>
+#include "Vector2.h"
 
 #include <optional>
 #include <string>
@@ -10,6 +10,8 @@
 class Map
 {
 public:
+    static constexpr size_t EMPTY_SQUARE_INDEX = 0;
+
     static std::optional<Map> create(const std::string& mapFilePath);
 
     Map();

@@ -6,7 +6,9 @@
 
 My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra types. One of the goals was to make raycasting computation equations more explicit and readable.
 
-## Controls
+![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo2.png)
+
+## Features
 
 - Up/Down to move and Left/Right to turn around
 - WASD to move and strafe

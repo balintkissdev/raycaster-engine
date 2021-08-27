@@ -16,5 +16,4 @@ target_sources(${PROJECT_NAME}
         Texture.h
         Vector2.h
         Vector2.inl
-        WallTypes.h
 )

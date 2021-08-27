@@ -30,13 +30,15 @@ bool SDLRenderer::init(const uint16_t screenWidth, const uint16_t screenHeight, 
         return false;
     }
 
-    renderer_.reset(SDL_CreateRenderer(window_.get(), -1,
+    renderer_.reset(SDL_CreateRenderer(
+        window_.get(),
+        -1,
 #ifdef __EMSCRIPTEN__
-        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC    // TODO: Not sure if makes difference in speed.
+        SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC  // TODO: Not sure if makes difference in speed.
 #else
         0
 #endif
-    ));
+        ));
     if (!renderer_)
     {
         std::cerr << "Error creating renderer: " + std::string(SDL_GetError());

@@ -41,13 +41,10 @@ private:
     std::unique_ptr<IRenderer> renderer_;
     float movementSpeed_;
     bool running_{false};
-    bool overviewMapOn_{false};
 
     void event();
     void update();
     void render();
-
-    void drawMap();
 };
 
 #endif

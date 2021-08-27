@@ -1,7 +1,6 @@
 #include "Camera.h"
 
 #include "Matrix2.h"
-#include "WallTypes.h"
 
 Camera::Camera(const Vector2<float>& position, const Vector2<float>& direction, const float fieldOfView, Map& map)
     : map_(map)
@@ -17,13 +16,13 @@ void Camera::move(const float moveDirection)
 {
     if (map_.position(
             static_cast<int>(position_.x + moveDirection * (direction_.x * movementSpeed_)),
-            static_cast<int>(position_.y)) == EMPTY_SPACE)
+            static_cast<int>(position_.y)) == Map::EMPTY_SQUARE_INDEX)
     {
         position_.x += moveDirection * (direction_.x * movementSpeed_);
     }
     if (map_.position(
             static_cast<int>(position_.x),
-            static_cast<int>(position_.y + moveDirection * (direction_.y * movementSpeed_))) == EMPTY_SPACE)
+            static_cast<int>(position_.y + moveDirection * (direction_.y * movementSpeed_))) == Map::EMPTY_SQUARE_INDEX)
     {
         position_.y += moveDirection * (direction_.y * movementSpeed_);
     }
@@ -39,13 +38,13 @@ void Camera::strafe(const float strafeDirection)
 {
     if (map_.position(
             static_cast<int>(position_.x - strafeDirection * (plane_.x * movementSpeed_)),
-            static_cast<int>(position_.y)) == EMPTY_SPACE)
+            static_cast<int>(position_.y)) == Map::EMPTY_SQUARE_INDEX)
     {
         position_.x -= strafeDirection * (plane_.x * movementSpeed_);
     }
     if (map_.position(
             static_cast<int>(position_.x),
-            static_cast<int>(position_.y - strafeDirection * (plane_.y * movementSpeed_))) == EMPTY_SPACE)
+            static_cast<int>(position_.y - strafeDirection * (plane_.y * movementSpeed_))) == Map::EMPTY_SQUARE_INDEX)
     {
         position_.y -= strafeDirection * (plane_.y * movementSpeed_);
     }
@@ -76,4 +75,14 @@ Camera& Camera::rotationSpeed(const float rotationSpeed)
 {
     rotationSpeed_ = rotationSpeed;
     return *this;
+}
+
+Vector2<float> Camera::planeLeftEdgeDirection() const
+{
+    return direction_ - plane_;
+}
+
+Vector2<float> Camera::planeRightEdgeDirection() const
+{
+    return direction_ + plane_;
 }

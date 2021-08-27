@@ -1,7 +1,6 @@
 #include "Game.h"
 
 #include "SDLRenderer.h"
-#include "WallTypes.h"
 
 #include <SDL2/SDL.h>
 
@@ -167,7 +166,7 @@ void Game::event()
                         running_ = false;
                         break;
                     case SDLK_m:
-                        overviewMapOn_ = !overviewMapOn_;
+                        raycaster_.toggleMapDraw();
                         break;
                 }
         }
@@ -182,96 +181,8 @@ void Game::update()
 void Game::render()
 {
     renderer_->clearScreen();
-
     raycaster_.drawEverything(*renderer_);
-
-    if (overviewMapOn_)
-    {
-        drawMap();
-    }
-
     renderer_->refreshScreen();
-}
-
-// TODO: this is a very basic map
-// TODO: Move this into RayCaster
-void Game::drawMap()
-{
-    static const WallColor grey = {160, 160, 160};
-    static const WallColor red = {255, 0, 0};
-    static const WallColor green = {0, 255, 0};
-    static const WallColor blue = {0, 0, 255};
-    static const WallColor yellow = {255, 255, 0};
-
-    struct Rectangle
-    {
-        size_t x;
-        size_t y;
-        size_t width;
-        size_t height;
-    };
-
-    Rectangle rect;
-
-    // Draw blocks
-    const size_t squareSize = 32;
-    for (size_t row = 0; row < map_.rowCount(); ++row)
-    {
-        for (size_t column = 0; column < map_.columnCount(); ++column)
-        {
-            WallColor wallColor = grey;
-            switch (map_.position(row, column))
-            {
-                case RED_WALL:
-                    wallColor = red;
-                    break;
-                case GREEN_WALL:
-                    wallColor = green;
-                    break;
-                case BLUE_WALL:
-                    wallColor = blue;
-                    break;
-                case YELLOW_WALL:
-                    wallColor = yellow;
-                    break;
-            }
-            renderer_->setDrawColor(wallColor.red, wallColor.green, wallColor.blue);
-
-            // Watch out: row/column is not the same as x/y. This was a source of a nasty bug.
-            rect = {0 + squareSize * column, 0 + squareSize * row, squareSize, squareSize};
-            renderer_->fillRectangle(
-                static_cast<int>(rect.x),
-                static_cast<int>(rect.y),
-                static_cast<int>(rect.width),
-                static_cast<int>(rect.height));
-            renderer_->setDrawColor(0, 0, 0);
-            renderer_->drawRectangle(
-                static_cast<int>(rect.x),
-                static_cast<int>(rect.y),
-                static_cast<int>(rect.width),
-                static_cast<int>(rect.height));
-        }
-    }
-
-    // Draw player
-    renderer_->setDrawColor(255, 255, 255);
-    // HACK: need to change internal representation of the map instead switching x/y here
-    rect = {
-        squareSize * static_cast<int>(camera_.position().y) + squareSize / 4,
-        squareSize * static_cast<int>(camera_.position().x) + squareSize / 4,
-        squareSize / 2,
-        squareSize / 2};
-    renderer_->fillRectangle(
-        static_cast<int>(rect.x),
-        static_cast<int>(rect.y),
-        static_cast<int>(rect.width),
-        static_cast<int>(rect.height));
-    renderer_->setDrawColor(0, 0, 0, 255);
-    renderer_->drawRectangle(
-        static_cast<int>(rect.x),
-        static_cast<int>(rect.y),
-        static_cast<int>(rect.width),
-        static_cast<int>(rect.height));
 }
 
 int main(int /*argc*/, char** /*argv*/)

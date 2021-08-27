@@ -36,6 +36,9 @@ public:
     Camera& movementSpeed(const float movementSpeed);
     Camera& rotationSpeed(const float rotationSpeed);
 
+    [[nodiscard]] Vector2<float> planeLeftEdgeDirection() const;
+    [[nodiscard]] Vector2<float> planeRightEdgeDirection() const;
+
 private:
     Map& map_;
     Vector2<float> position_;

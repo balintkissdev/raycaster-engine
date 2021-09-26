@@ -19,6 +19,7 @@ public:
     bool init(IRenderer& renderer);
     void drawEverything(IRenderer& renderer);
     void toggleMapDraw();
+    void toggleNightMode();
 
 private:
     enum class WallSide
@@ -31,6 +32,7 @@ private:
     static constexpr uint32_t DARKEN_MASK = 8355711;
 
     static constexpr uint32_t rgbToUint32(const uint8_t r, const uint8_t g, const uint8_t b);
+    static uint32_t shadeTexelByDistance(const uint32_t texelToShade, const float distance);
 
     void drawTop();
     void drawBottom();
@@ -81,12 +83,14 @@ private:
     Camera& camera_;
     Map& map_;
     std::optional<Texture> topTexture_;
+    std::optional<Texture> topTextureNight_;
     std::optional<Texture> bottomTexture_;
     std::array<std::optional<Texture>, 4> wallTextures_;
     std::vector<uint32_t> drawBuffer_;
     uint16_t screenWidth_, screenHeight_;
 
     bool overviewMapOn_{false};
+    bool drawDarkness_{false};
     float cameraLineDistance_;
     float planeLeftDistance_;
     float planeRightDistance_;

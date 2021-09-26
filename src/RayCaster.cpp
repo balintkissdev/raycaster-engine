@@ -17,14 +17,16 @@ bool RayCaster::init(IRenderer& renderer)
     drawBuffer_.resize(screenWidth_ * screenHeight_);
 
     topTexture_ = renderer.createTexture("resources/textures/dusk_sky_texture.bmp");
+    topTextureNight_ = renderer.createTexture("resources/textures/night_sky_texture.bmp");
     bottomTexture_ = renderer.createTexture("resources/textures/floor.bmp");
     wallTextures_[0] = renderer.createTexture("resources/textures/wall0.bmp");
     wallTextures_[1] = renderer.createTexture("resources/textures/wall1.bmp");
     wallTextures_[2] = renderer.createTexture("resources/textures/wall2.bmp");
     wallTextures_[3] = renderer.createTexture("resources/textures/wall3.bmp");
 
-    return topTexture_.has_value() && bottomTexture_.has_value() && wallTextures_[0].has_value() &&
-           wallTextures_[1].has_value() && wallTextures_[2].has_value() && wallTextures_[3].has_value();
+    return topTexture_.has_value() && topTextureNight_.has_value() && bottomTexture_.has_value() &&
+           wallTextures_[0].has_value() && wallTextures_[1].has_value() && wallTextures_[2].has_value() &&
+           wallTextures_[3].has_value();
 }
 
 void RayCaster::drawEverything(IRenderer& renderer)
@@ -45,15 +47,41 @@ void RayCaster::toggleMapDraw()
     overviewMapOn_ = !overviewMapOn_;
 }
 
+void RayCaster::toggleNightMode()
+{
+    drawDarkness_ = !drawDarkness_;
+}
+
 constexpr uint32_t RayCaster::rgbToUint32(const uint8_t r, const uint8_t g, const uint8_t b)
 {
     return (255 << 24) + (r << 16) + (g << 8) + b;
 }
 
+uint32_t RayCaster::shadeTexelByDistance(const uint32_t texelToShade, const float distance)
+{
+    static const float shadeAmount = 0.4f;
+    const float shadeFactor = 1.0f - std::min(1.0f, distance * shadeAmount);
+
+    uint8_t red = (texelToShade >> 16) & 0xff;
+    uint8_t green = (texelToShade >> 8) & 0xff;
+    uint8_t blue = texelToShade & 0xff;
+
+    red = uint8_t(float(red) * shadeFactor);
+    green = uint8_t(float(green) * shadeFactor);
+    blue = uint8_t(float(blue) * shadeFactor);
+
+    return rgbToUint32(red, green, blue);
+}
+
 void RayCaster::drawTop()
 {
+    Texture* textureToDraw = &*topTexture_;
+    if (drawDarkness_)
+    {
+        textureToDraw = &*topTextureNight_;
+    }
     // FIXME: Use full sky texture, not just half. It bugs out if walls are too far.
-    memcpy(drawBuffer_.data(), topTexture_->texels.data(), topTexture_->pitch * topTexture_->height);
+    memcpy(drawBuffer_.data(), textureToDraw->texels.data(), textureToDraw->pitch * textureToDraw->height);
 }
 
 void RayCaster::drawBottom()
@@ -86,7 +114,13 @@ void RayCaster::drawBottom()
 
             floor += floorStep;
 
-            const uint32_t texel = bottomTexture_->texels[bottomTexture_->width * texCoord.y + texCoord.x];
+            uint32_t texel = bottomTexture_->texels[bottomTexture_->width * texCoord.y + texCoord.x];
+
+            if (drawDarkness_)
+            {
+                texel = shadeTexelByDistance(texel, cameraToRowDistance);
+            }
+
             plotPixel(x, y, texel);
         }
     }
@@ -211,7 +245,7 @@ void RayCaster::drawMapDebugLines(const Vector2<float>& mapPlayerPosition)
     }
 
     // Draw leftmost plane line
-    for (uint16_t i = 2; i < planeLeftDistance_ * MAP_SQUARE_SIZE; ++i)
+    for (uint16_t i = 2; i < static_cast<uint16_t>(planeLeftDistance_ * MAP_SQUARE_SIZE); ++i)
     {
         plotPixel(
             static_cast<uint16_t>(mapPlayerPosition.y + (static_cast<float>(i) * camera_.planeLeftEdgeDirection().y)),
@@ -220,7 +254,7 @@ void RayCaster::drawMapDebugLines(const Vector2<float>& mapPlayerPosition)
     }
 
     // Draw rightmost plane line
-    for (uint16_t i = 2; i < planeRightDistance_ * MAP_SQUARE_SIZE; ++i)
+    for (uint16_t i = 2; i < static_cast<uint16_t>(planeRightDistance_ * MAP_SQUARE_SIZE); ++i)
     {
         plotPixel(
             static_cast<uint16_t>(mapPlayerPosition.y + (static_cast<float>(i) * camera_.planeRightEdgeDirection().y)),
@@ -380,6 +414,10 @@ void RayCaster::drawTexturedColumn(
             texel = (texel >> 1) & DARKEN_MASK;
         }
 
+        if (drawDarkness_)
+        {
+            texel = shadeTexelByDistance(texel, wallDistance);
+        }
         plotPixel(x, y, texel);
     }
 }

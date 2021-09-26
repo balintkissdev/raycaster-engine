@@ -168,6 +168,9 @@ void Game::event()
                     case SDLK_m:
                         raycaster_.toggleMapDraw();
                         break;
+                    case SDLK_n:
+                        raycaster_.toggleNightMode();
+                        break;
                 }
         }
     }

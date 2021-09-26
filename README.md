@@ -8,11 +8,14 @@ My take on making a raycasting pseudo-3D engine in C++, also with my own tiny te
 
 ![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo2.png)
 
+![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo_night.png)
+
 ## Features
 
-- Up/Down to move and Left/Right to turn around
-- WASD to move and strafe
-- M to toggle mini-map
+- `Up/Down` to move and `Left/Right` to turn around
+- `WASD` to move and strafe
+- `M` to toggle mini-map
+- `N` to toggle "Night Mode" and display darkness and lighting effect
 
 ## Requirements
 
@@ -57,4 +60,5 @@ emmake make
   - [Super Fast Ray Casting in Tiled Worlds using DDA](https://www.youtube.com/watch?v=NbSee-XM7WA)
   - [Introducing RayCastWorld](https://www.youtube.com/watch?v=Vij_obgv9h4)
 - Free sky texture is from http://www.texturex.com
+- Free night sky texture is from https://opengameart.org/content/night-sky-stars-and-galaxies
 - Free wall textures are from https://opengameart.org/content/wall-grass-rock-stone-wood-and-dirt-480

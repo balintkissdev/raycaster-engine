@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-include("cmake/modules/HunterGate.cmake")
-HunterGate(
-    URL "https://github.com/cpp-pm/hunter/archive/v0.23.296.tar.gz"
-    SHA1 "232f5022ee1d45955a7e8d3e1720f31bac1bb534"
-)
+set(HUNTER_PACKAGES SDL2)
+
+include(FetchContent)
+FetchContent_Declare(SetupHunter GIT_REPOSITORY https://github.com/cpp-pm/gate)
+FetchContent_MakeAvailable(SetupHunter)
 
 set(PROJECT_NAME Raycaster)
 project(${PROJECT_NAME} LANGUAGES CXX)
@@ -74,7 +74,6 @@ if(EMSCRIPTEN)
         --shell-file "${PROJECT_SOURCE_DIR}/src/shell_minimal.html"
     )
 else()
-    hunter_add_package(SDL2)
     find_package(SDL2 CONFIG REQUIRED)
 
     # Hunter SDL2 package uses static linking

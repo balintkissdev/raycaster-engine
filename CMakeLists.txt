@@ -69,6 +69,7 @@ if(EMSCRIPTEN)
     )
     target_link_options(${PROJECT_NAME} PRIVATE
         "SHELL: -s USE_SDL=2"
+        "SHELL: -s INITIAL_MEMORY=33554432"
         --preload-file "resources"
         --shell-file "${PROJECT_SOURCE_DIR}/src/shell_minimal.html"
     )

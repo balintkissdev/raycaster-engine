@@ -8,7 +8,7 @@ FetchContent_MakeAvailable(SetupHunter)
 
 set(PROJECT_NAME Raycaster)
 project(${PROJECT_NAME} LANGUAGES CXX)
-project(${PROJECT_NAME} VERSION 0.0.2)
+project(${PROJECT_NAME} VERSION 0.0.4)  # TODO: Get version from git tag
 
 add_executable(${PROJECT_NAME} "")
 

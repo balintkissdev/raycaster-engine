@@ -52,7 +52,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            build/*.tar.gz
-            build/*.zip
+            build/Raycaster-*.tar.gz
+            build/Raycaster-*.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

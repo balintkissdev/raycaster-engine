@@ -8,7 +8,9 @@ FetchContent_MakeAvailable(SetupHunter)
 
 set(PROJECT_NAME Raycaster)
 project(${PROJECT_NAME} LANGUAGES CXX)
-project(${PROJECT_NAME} VERSION 0.0.4)  # TODO: Get version from git tag
+project(${PROJECT_NAME} VERSION 0.0.5)  # TODO: Get version from git tag
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
 add_executable(${PROJECT_NAME} "")
 
@@ -80,20 +82,36 @@ else()
     target_link_libraries(${PROJECT_NAME} SDL2::SDL2main SDL2::SDL2)
 endif()
 
-set(CPACK_PACKAGE_NAME "Raycaster")
-set(CPACK_PACKAGE_DESCRIPTION "C++ raycasting pseudo-3D engine")
-set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
-set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
-set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
-set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
-set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
-
-install(FILES "${CPACK_RESOURCE_FILE_LICENSE}" "${CPACK_RESOURCE_FILE_README}" DESTINATION ".")
-install(TARGETS ${PROJECT_NAME} RUNTIME CONFIGURATIONS Release DESTINATION ".")
-install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
+# Create distributable ZIP file for Windows releases
 if(WIN32)
+    set(CPACK_PACKAGE_NAME "Raycaster")
+    set(CPACK_PACKAGE_DESCRIPTION "C++ raycasting pseudo-3D engine")
+    set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+    set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+    set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+    set(CPACK_RESOURCE_FILE_LICENSE "${PROJECT_SOURCE_DIR}/LICENSE")
+    set(CPACK_RESOURCE_FILE_README "${PROJECT_SOURCE_DIR}/README.md")
+
+    install(FILES "${CPACK_RESOURCE_FILE_LICENSE}" "${CPACK_RESOURCE_FILE_README}" DESTINATION ".")
+    install(TARGETS ${PROJECT_NAME} RUNTIME CONFIGURATIONS Release DESTINATION ".")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
     set(CPACK_GENERATOR ZIP)
+    include(CPack)
+# Linux releases are distributed as AppImage files instead for compatibility
 else()
-    set(CPACK_GENERATOR TGZ)
+    # Keep "resources" and "share" folder separate to avoid packaging icon as asset for the app
+    set(ICON "${PROJECT_SOURCE_DIR}/share/icons/appimage.svg")
+    install(CODE
+    "include(${PROJECT_SOURCE_DIR}/cmake/modules/appimage.cmake)
+    make_appimage(
+        EXE \"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}\"
+        NAME \"${PROJECT_NAME}\"
+        ICON \"${ICON}\"
+        DIR_ICON \"${ICON}\"
+        OUTPUT_NAME \"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}.AppImage\"
+        ASSETS \"${CMAKE_CURRENT_BINARY_DIR}/resources\"
+    )
+    "
+    COMPONENT Runtime
+    )
 endif()
-include(CPack)

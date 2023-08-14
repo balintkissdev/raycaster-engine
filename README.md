@@ -46,8 +46,13 @@ issue these commands:
 ```bash
 mkdir build
 cd build
-emcmake cmake ..
-emmake make
+# Workarounds required for Emscripten and Hunter to work together on a local machine.
+emcmake cmake \
+  -DCMAKE_C_ABI_COMPILED=ON \
+  -DCMAKE_CXX_ABI_COMPILED=ON \
+  -DCMAKE_CROSSCOMPILING=ON \
+  ..
+emcmake cmake --build . --config Release
 ```
 
 ## References:

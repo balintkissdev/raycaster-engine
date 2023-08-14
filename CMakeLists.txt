@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.16 FATAL_ERROR)
 
-set(HUNTER_PACKAGES SDL2)
+option(WEBBUILD_CI "Specify if an Emscripten build is running in CI" OFF)
 
-include(FetchContent)
-FetchContent_Declare(SetupHunter GIT_REPOSITORY https://github.com/cpp-pm/gate)
-FetchContent_MakeAvailable(SetupHunter)
+# Emscripten uses its own SDL2 package which conflicts with Hunter in CI.
+# Disable Hunter during Emscripten CI otherwise it cannot find SDL2 header files.
+if(NOT WEBBUILD_CI)
+    set(HUNTER_PACKAGES SDL2)
+
+    include(FetchContent)
+    FetchContent_Declare(SetupHunter GIT_REPOSITORY https://github.com/cpp-pm/gate)
+    FetchContent_MakeAvailable(SetupHunter)
+endif()
 
 set(PROJECT_NAME Raycaster)
 project(${PROJECT_NAME} LANGUAGES CXX)
@@ -62,6 +68,8 @@ add_custom_command(
 
 # TODO: Remove exceptions
 if(EMSCRIPTEN)
+    # Output will be Raycaster.html. Intentional to keep names of Raycaster.js,
+    # Raycaster.data and Raycaster.wasm.
     set_target_properties(${PROJECT_NAME} PROPERTIES
         SUFFIX ".html"
     )
@@ -97,6 +105,12 @@ if(WIN32)
     install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
     set(CPACK_GENERATOR ZIP)
     include(CPack)
+elseif(EMSCRIPTEN)
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.data" DESTINATION ".")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.js" DESTINATION ".")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm" DESTINATION ".")
+    install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.html" RENAME "index.html" DESTINATION ".")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
 # Linux releases are distributed as AppImage files instead for compatibility
 else()
     # Keep "resources" and "share" folder separate to avoid packaging icon as asset for the app

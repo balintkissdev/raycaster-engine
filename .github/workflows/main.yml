@@ -62,5 +62,30 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# TODO: Emscripten build
+  web-build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: lukka/get-cmake@latest
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libsdl2-dev
+      - name: Setup Emscripten
+        uses: mymindstorm/setup-emsdk@v11
+      - name: Build project
+        run: |
+          emcmake cmake \
+            -DWEBBUILD_CI=ON \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=dist \
+            .
+          emmake make VERBOSE=1
+          emmake make install VERBOSE=1
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist
 

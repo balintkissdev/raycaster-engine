@@ -16,13 +16,13 @@ bool RayCaster::init(IRenderer& renderer)
     screenHeight_ = renderer.screenHeight();
     drawBuffer_.resize(screenWidth_ * screenHeight_);
 
-    topTexture_ = renderer.createTexture("resources/textures/dusk_sky_texture.bmp");
-    topTextureNight_ = renderer.createTexture("resources/textures/night_sky_texture.bmp");
-    bottomTexture_ = renderer.createTexture("resources/textures/floor.bmp");
-    wallTextures_[0] = renderer.createTexture("resources/textures/wall0.bmp");
-    wallTextures_[1] = renderer.createTexture("resources/textures/wall1.bmp");
-    wallTextures_[2] = renderer.createTexture("resources/textures/wall2.bmp");
-    wallTextures_[3] = renderer.createTexture("resources/textures/wall3.bmp");
+    topTexture_ = renderer.createTexture("assets/textures/dusk_sky_texture.bmp");
+    topTextureNight_ = renderer.createTexture("assets/textures/night_sky_texture.bmp");
+    bottomTexture_ = renderer.createTexture("assets/textures/floor.bmp");
+    wallTextures_[0] = renderer.createTexture("assets/textures/wall0.bmp");
+    wallTextures_[1] = renderer.createTexture("assets/textures/wall1.bmp");
+    wallTextures_[2] = renderer.createTexture("assets/textures/wall2.bmp");
+    wallTextures_[3] = renderer.createTexture("assets/textures/wall3.bmp");
 
     return topTexture_.has_value() && topTextureNight_.has_value() && bottomTexture_.has_value() &&
            wallTextures_[0].has_value() && wallTextures_[1].has_value() && wallTextures_[2].has_value() &&

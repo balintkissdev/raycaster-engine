@@ -1,5 +1,4 @@
-#ifndef TEXTURE_H
-#define TEXTURE_H
+#pragma once
 
 #include <cstddef>
 #include <cstdint>
@@ -13,4 +12,3 @@ struct Texture
     std::vector<uint32_t> texels;
 };
 
-#endif

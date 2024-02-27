@@ -1,5 +1,4 @@
-#ifndef MAP_H
-#define MAP_H
+#pragma once
 
 #include "Vector2.h"
 
@@ -25,4 +24,3 @@ private:
     size_t rowCount_{0}, columnCount_{0};
 };
 
-#endif

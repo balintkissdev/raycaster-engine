@@ -1,14 +1,14 @@
 # Raycaster engine
 
-![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo.gif)
+![alt tag](doc/img/demo.gif)
 
 [Live demo](https://balintkissdev.github.io/raycaster-engine) | [Windows 64-bit download](https://github.com/balintkissdev/raycaster-engine/releases/download/0.0.5/Raycaster-0.0.5-win64.zip) | [Linux 64-bit download](https://github.com/balintkissdev/raycaster-engine/releases/download/0.0.5/Raycaster-0.0.5-linux-x86_64.AppImage)
 
-My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra types. One of the goals was to make raycasting computation equations more explicit and readable.
+My take on making a raycasting pseudo-3D engine in C++, also with my own tiny template linear algebra types. One of the goals was to make raycasting computation equations more explicit and readable. Made first back in 2016 and adding code since to it.
 
-![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo2.png)
+![alt tag](doc/img/demo2.png)
 
-![alt tag](https://raw.githubusercontent.com/balintkissdev/raycaster-engine/master/demo_night.png)
+![alt tag](doc/img/demo_night.png)
 
 ## Features
 

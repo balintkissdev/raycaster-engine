@@ -1,5 +1,4 @@
-#ifndef IRENDERER_H
-#define IRENDERER_H
+#pragma once
 
 #include "Texture.h"
 
@@ -30,4 +29,3 @@ public:
     virtual std::optional<Texture> createTexture(const std::string& textureFilePath) = 0;
 };
 
-#endif  // IRENDERER_H

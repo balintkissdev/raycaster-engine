@@ -12,9 +12,24 @@ if(NOT WEBBUILD_CI)
     FetchContent_MakeAvailable(SetupHunter)
 endif()
 
+# Set default build type to Release
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "Setting build type to 'Release' default.")
+  set(CMAKE_BUILD_TYPE Release CACHE STRING "" FORCE)
+endif()
+
 set(PROJECT_NAME Raycaster)
+set(PROJECT_AUTHOR "Balint Kiss")
+set(PROJECT_DESCRIPTION "Pseudo-3D raycasting engine in C++17.")
+set(PROJECT_URL "https://github.com/balintkissdev/raycaster-engine")
+
+# TODO: Get version from git tag
+set(PROJECT_VERSION_MAJOR 0)
+set(PROJECT_VERSION_MINOR 0)
+set(PROJECT_VERSION_PATCH 5)
+set(PROJECT_VERSION ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT_VERSION_PATCH})
+
 project(${PROJECT_NAME} LANGUAGES CXX)
-project(${PROJECT_NAME} VERSION 0.0.5)  # TODO: Get version from git tag
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake/modules")
 
@@ -57,13 +72,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE src)
 
 add_subdirectory(src)
 
-# Copy resource files
+# Copy asset files
 add_custom_command(
     TARGET ${PROJECT_NAME}
     PRE_LINK    # Needed for Emscripten preload
     COMMAND ${CMAKE_COMMAND} -E copy_directory
-        "${PROJECT_SOURCE_DIR}/resources"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/resources"
+        "${PROJECT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:${PROJECT_NAME}>/assets"
 )
 
 # TODO: Remove exceptions
@@ -80,7 +95,7 @@ if(EMSCRIPTEN)
     target_link_options(${PROJECT_NAME} PRIVATE
         "SHELL: -s USE_SDL=2"
         "SHELL: -s INITIAL_MEMORY=33554432"
-        --preload-file "resources"
+        --preload-file "assets"
         --shell-file "${PROJECT_SOURCE_DIR}/src/shell_minimal.html"
     )
 else()
@@ -102,7 +117,7 @@ if(WIN32)
 
     install(FILES "${CPACK_RESOURCE_FILE_LICENSE}" "${CPACK_RESOURCE_FILE_README}" DESTINATION ".")
     install(TARGETS ${PROJECT_NAME} RUNTIME CONFIGURATIONS Release DESTINATION ".")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/assets/" DESTINATION "assets")
     set(CPACK_GENERATOR ZIP)
     include(CPack)
 elseif(EMSCRIPTEN)
@@ -110,10 +125,10 @@ elseif(EMSCRIPTEN)
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.js" DESTINATION ".")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.wasm" DESTINATION ".")
     install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.html" RENAME "index.html" DESTINATION ".")
-    install(DIRECTORY "${PROJECT_SOURCE_DIR}/resources/" DESTINATION "resources")
+    install(DIRECTORY "${PROJECT_SOURCE_DIR}/assets/" DESTINATION "assets")
 # Linux releases are distributed as AppImage files instead for compatibility
 else()
-    # Keep "resources" and "share" folder separate to avoid packaging icon as asset for the app
+    # Keep "assets" and "share" folder separate to avoid packaging icon as asset for the app
     set(ICON "${PROJECT_SOURCE_DIR}/share/icons/appimage.svg")
     install(CODE
     "include(${PROJECT_SOURCE_DIR}/cmake/modules/appimage.cmake)
@@ -123,7 +138,7 @@ else()
         ICON \"${ICON}\"
         DIR_ICON \"${ICON}\"
         OUTPUT_NAME \"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-${PROJECT_VERSION}-linux-${CMAKE_SYSTEM_PROCESSOR}.AppImage\"
-        ASSETS \"${CMAKE_CURRENT_BINARY_DIR}/resources\"
+        ASSETS \"${CMAKE_CURRENT_BINARY_DIR}/assets\"
     )
     "
     COMPONENT Runtime

@@ -1,5 +1,4 @@
-#ifndef RAYCASTER_H
-#define RAYCASTER_H
+#pragma once
 
 #include "Camera.h"
 #include "Map.h"
@@ -96,4 +95,3 @@ private:
     float planeRightDistance_;
 };
 
-#endif

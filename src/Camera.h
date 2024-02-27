@@ -1,11 +1,10 @@
-#ifndef CAMERA_H
-#define CAMERA_H
-
-#include <cstdint>
-#include <vector>
+#pragma once
 
 #include "Map.h"
 #include "Vector2.h"
+
+#include <cstdint>
+#include <vector>
 
 class Camera
 {
@@ -47,4 +46,3 @@ private:
     float movementSpeed_, rotationSpeed_;
 };
 
-#endif

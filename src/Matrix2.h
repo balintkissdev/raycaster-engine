@@ -1,7 +1,8 @@
-#ifndef MATRIX2_H
-#define MATRIX2_H
+#pragma once
 
 #include "Vector2.h"
+
+// TODO: Can be improved with SIMD
 
 template <typename T>
 class Matrix2
@@ -52,4 +53,3 @@ inline Vector2<T> operator*(const Vector2<T>& vector, Matrix2<T> matrix);
 
 #include "Matrix2.inl"
 
-#endif

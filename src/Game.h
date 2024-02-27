@@ -1,5 +1,4 @@
-#ifndef GAME_H
-#define GAME_H
+#pragma once
 
 #include <memory>
 #include <string>
@@ -47,4 +46,3 @@ private:
     void render();
 };
 
-#endif

@@ -1,5 +1,4 @@
-#ifndef VECTOR2_H
-#define VECTOR2_H
+#pragma once
 
 template <typename T>
 struct Vector2
@@ -44,4 +43,3 @@ inline Vector2<T> operator/(Vector2<T> vector, const T& scalar);
 
 #include "Vector2.inl"
 
-#endif

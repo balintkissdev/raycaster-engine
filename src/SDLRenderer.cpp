@@ -46,13 +46,13 @@ bool SDLRenderer::init(const uint16_t screenWidth, const uint16_t screenHeight, 
     }
     SDL_ShowCursor(SDL_DISABLE);
 
-    streamableTexture_.reset(SDL_CreateTexture(
+    screenTexture_.reset(SDL_CreateTexture(
         renderer_.get(),
         SDL_GetWindowPixelFormat(window_.get()),
         SDL_TEXTUREACCESS_STREAMING,
         screenWidth,
         screenHeight));
-    if (!streamableTexture_)
+    if (!screenTexture_)
     {
         std::cerr << SDL_GetError();
         return false;
@@ -106,13 +106,13 @@ void SDLRenderer::fillRectangle(const int x, const int y, const int width, const
 
 void SDLRenderer::drawBuffer(uint32_t* drawBuffer)
 {
-    void* streamableTexturePixels = nullptr;
-    int streamableTexturePitch;
-    SDL_LockTexture(streamableTexture_.get(), nullptr, &streamableTexturePixels, &streamableTexturePitch);
-    memcpy(streamableTexturePixels, drawBuffer, streamableTexturePitch * screenHeight_);
-    SDL_UnlockTexture(streamableTexture_.get());
+    void* screenTexturePixels = nullptr;
+    int screenTexturePitch;
+    SDL_LockTexture(screenTexture_.get(), nullptr, &screenTexturePixels, &screenTexturePitch);
+    memcpy(screenTexturePixels, drawBuffer, screenTexturePitch * screenHeight_);
+    SDL_UnlockTexture(screenTexture_.get());
 
-    SDL_RenderCopy(renderer_.get(), streamableTexture_.get(), nullptr, nullptr);
+    SDL_RenderCopy(renderer_.get(), screenTexture_.get(), nullptr, nullptr);
 }
 
 std::optional<Texture> SDLRenderer::createTexture(const std::string& textureFilePath)

@@ -5,6 +5,7 @@ target_sources(${PROJECT_NAME}
         Game.h
         Game.cpp
         IRenderer.h
+        main.cpp
         Matrix2.h
         Matrix2.inl
         Map.h

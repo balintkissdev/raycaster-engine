@@ -1,5 +1,4 @@
-#ifndef SDLRENDERER_H
-#define SDLRENDERER_H
+#pragma once
 
 #include "IRenderer.h"
 
@@ -49,7 +48,6 @@ private:
     SDLRendererPtr renderer_;
     uint16_t screenWidth_;
     uint16_t screenHeight_;
-    SDLTexturePtr streamableTexture_;
+    SDLTexturePtr screenTexture_;
 };
 
-#endif  // SDLRENDERER_H

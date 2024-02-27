@@ -31,7 +31,6 @@ Game::Game()
 
 Game::~Game()
 {
-    renderer_.reset();
     SDL_Quit();
 }
 
@@ -46,9 +45,8 @@ bool Game::init()
     {
         return false;
     }
-    atexit(SDL_Quit);
 
-    std::optional<Map> map = Map::create("resources/map/map.dat");
+    std::optional<Map> map = Map::create("assets/map/map.txt");
     if (!map.has_value())
     {
         return false;
@@ -188,13 +186,3 @@ void Game::render()
     renderer_->refreshScreen();
 }
 
-int main(int /*argc*/, char** /*argv*/)
-{
-    Game game;
-    if (!game.init())
-    {
-        return EXIT_FAILURE;
-    }
-
-    return game.run();
-}

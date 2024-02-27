@@ -25,7 +25,6 @@ Game::Game()
     : camera_(INITIAL_POSITION, INITIAL_DIRECTION, INITIAL_FIELD_OF_VIEW, map_)
     , raycaster_(camera_, map_)
     , renderer_(std::make_unique<SDLRenderer>())
-    , movementSpeed_(BASE_MOVEMENT_SPEED)
 {
 }
 
@@ -113,40 +112,13 @@ void Game::event()
     // TODO: Decouple SDL event handling
     const Uint8* keystate = SDL_GetKeyboardState(nullptr);
 
-    // FIXME: this code segment looks rather monolithic
-    if (keystate[SDL_SCANCODE_LSHIFT])
-    {
-        movementSpeed_ = RUN_MOVEMENT_SPEED;
-    }
-    else
-    {
-        movementSpeed_ = BASE_MOVEMENT_SPEED;
-    }
-
-    if (keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W])
-    {
-        camera_.move(Camera::DIRECTION_FORWARD);
-    }
-    if (keystate[SDL_SCANCODE_DOWN] || keystate[SDL_SCANCODE_S])
-    {
-        camera_.move(Camera::DIRECTION_BACKWARD);
-    }
-    if (keystate[SDL_SCANCODE_LEFT])
-    {
-        camera_.turn(Camera::DIRECTION_LEFT);
-    }
-    if (keystate[SDL_SCANCODE_RIGHT])
-    {
-        camera_.turn(Camera::DIRECTION_RIGHT);
-    }
-    if (keystate[SDL_SCANCODE_A])
-    {
-        camera_.strafe(Camera::DIRECTION_LEFT);
-    }
-    if (keystate[SDL_SCANCODE_D])
-    {
-        camera_.strafe(Camera::DIRECTION_RIGHT);
-    }
+    eventState_.moveForward = keystate[SDL_SCANCODE_UP] || keystate[SDL_SCANCODE_W];
+    eventState_.moveBackward = keystate[SDL_SCANCODE_DOWN] || keystate[SDL_SCANCODE_S];
+    eventState_.turnLeft = keystate[SDL_SCANCODE_LEFT];
+    eventState_.turnRight = keystate[SDL_SCANCODE_RIGHT];
+    eventState_.strafeLeft = keystate[SDL_SCANCODE_A];
+    eventState_.strafeRight = keystate[SDL_SCANCODE_D];
+    eventState_.running = keystate[SDL_SCANCODE_LSHIFT];
 
     SDL_Event e;
     while (SDL_PollEvent(&e))
@@ -163,6 +135,7 @@ void Game::event()
                     case SDLK_ESCAPE:
                         running_ = false;
                         break;
+                    // HACK: Safe for single button toggles, can be more pretty though
                     case SDLK_m:
                         raycaster_.toggleMapDraw();
                         break;
@@ -176,7 +149,32 @@ void Game::event()
 
 void Game::update()
 {
-    camera_.movementSpeed(movementSpeed_);
+    camera_.movementSpeed(eventState_.running ? RUN_MOVEMENT_SPEED : BASE_MOVEMENT_SPEED);
+
+    if (eventState_.moveForward)
+    {
+        camera_.move(Camera::DIRECTION_FORWARD);
+    }
+    if (eventState_.moveBackward)
+    {
+        camera_.move(Camera::DIRECTION_BACKWARD);
+    }
+    if (eventState_.turnLeft)
+    {
+        camera_.turn(Camera::DIRECTION_LEFT);
+    }
+    if (eventState_.turnRight)
+    {
+        camera_.turn(Camera::DIRECTION_RIGHT);
+    }
+    if (eventState_.strafeLeft)
+    {
+        camera_.strafe(Camera::DIRECTION_LEFT);
+    }
+    if (eventState_.strafeRight)
+    {
+        camera_.strafe(Camera::DIRECTION_RIGHT);
+    }
 }
 
 void Game::render()

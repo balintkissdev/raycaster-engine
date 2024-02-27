@@ -23,6 +23,18 @@ public:
 #endif
 
 private:
+    // Input event collection for decoupling event polling from logic update processing
+    struct EventState
+    {
+        bool moveForward = false;
+        bool moveBackward = false;
+        bool turnLeft = false;
+        bool turnRight = false;
+        bool strafeLeft = false;
+        bool strafeRight = false;
+        bool running = false;
+    };
+
     static constexpr uint16_t WINDOW_WIDTH = 1024;
     static constexpr uint16_t WINDOW_HEIGHT = 768;
 
@@ -38,11 +50,10 @@ private:
     RayCaster raycaster_;
     Map map_;
     std::unique_ptr<IRenderer> renderer_;
-    float movementSpeed_;
     bool running_{false};
+    EventState eventState_;
 
     void event();
     void update();
     void render();
 };
-
